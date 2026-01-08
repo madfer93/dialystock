@@ -76,7 +76,7 @@ export default function AuthCallback() {
       setStatus('success')
       setMessage('¡Acceso concedido! Redirigiendo...')
 
-      // Redirigir según el rol
+      // Redirigir según el rol (Sincronizado con Home)
       await new Promise(resolve => setTimeout(resolve, 1000))
 
       const userProfile = profile || (await supabase
@@ -85,8 +85,25 @@ export default function AuthCallback() {
         .eq('id', user.id)
         .single()).data
 
-      if (userProfile?.role === 'admin_clinica') {
-        router.push('/admin')
+      const role = (userProfile?.role?.toLowerCase() || '').replace(/\s+/g, '_')
+      console.log('Rol detectado en callback:', role)
+
+      if (role === 'superadmin_global') {
+        router.push('/superadmin')
+      } else if (role === 'sala_hd') {
+        router.push('/sala-hd')
+      } else if (role === 'sala_pd') {
+        router.push('/sala-pd')
+      } else if (role === 'sala_quimico' || role === 'quimico') {
+        router.push('/sala-quimico')
+      } else if (role === 'jefe_hd') {
+        router.push('/jefe-hd')
+      } else if (role === 'jefe_pd') {
+        router.push('/jefe-pd')
+      } else if (role === 'admin_clinica') {
+        router.push('/clinica')
+      } else if (role === 'farmacia') {
+        router.push('/farmacia')
       } else {
         router.push('/clinica')
       }
