@@ -1,5 +1,7 @@
 'use client'
 
+export const dynamic = 'force-dynamic'
+
 import { supabase } from '@/lib/supabaseClient'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
@@ -58,7 +60,7 @@ export default function AuthCallback() {
         setMessage('Creando tu perfil...')
         // Esperar más tiempo si el perfil no existe aún
         await new Promise(resolve => setTimeout(resolve, 3000))
-        
+
         // Intentar de nuevo
         const { data: profile2, error: profileError2 } = await supabase
           .from('profiles')
@@ -76,7 +78,7 @@ export default function AuthCallback() {
 
       // Redirigir según el rol
       await new Promise(resolve => setTimeout(resolve, 1000))
-      
+
       const userProfile = profile || (await supabase
         .from('profiles')
         .select('role')
