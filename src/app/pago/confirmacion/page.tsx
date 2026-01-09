@@ -1,13 +1,13 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { CheckCircle2, XCircle, Clock, Mail, ArrowRight, Loader2 } from 'lucide-react'
 
 type PaymentStatus = 'APPROVED' | 'DECLINED' | 'PENDING' | 'ERROR' | 'LOADING'
 
-export default function ConfirmacionPago() {
+function ConfirmacionContent() {
     const searchParams = useSearchParams()
     const [status, setStatus] = useState<PaymentStatus>('LOADING')
     const [transactionId, setTransactionId] = useState<string>('')
@@ -185,5 +185,17 @@ export default function ConfirmacionPago() {
                 </p>
             </div>
         </div>
+    )
+}
+
+export default function ConfirmacionPago() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-[#0f172a] flex items-center justify-center">
+                <Loader2 className="animate-spin text-blue-500" size={48} />
+            </div>
+        }>
+            <ConfirmacionContent />
+        </Suspense>
     )
 }
