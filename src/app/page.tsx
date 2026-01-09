@@ -16,8 +16,14 @@ import {
   ChevronRight,
   Send,
   Building2,
-  Users
+  Users,
+  Facebook,
+  Instagram,
+  Mail,
+  Globe
 } from 'lucide-react'
+import { FaTiktok, FaFacebook, FaInstagram, FaGlobe } from 'react-icons/fa'
+import Link from 'next/link'
 
 export default function Home() {
   const [email, setEmail] = useState('')
@@ -275,29 +281,49 @@ export default function Home() {
                   Impulsamos la digitalización de clínicas renales en toda Latinoamérica.
                 </p>
                 <div className="flex gap-4">
-                  {[MessageCircle, Building2, Users].map((Icon, i) => (
-                    <a key={i} href="#" className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center hover:bg-blue-600 transition-colors">
-                      <Icon size={18} />
-                    </a>
-                  ))}
+                  <a href="https://www.facebook.com/profile.php?id=61583530845268" target="_blank" className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center hover:bg-blue-600 transition-colors shadow-lg shadow-blue-500/10">
+                    <FaFacebook size={18} />
+                  </a>
+                  <a href="https://www.instagram.com/dosis_de_conocimiento/" target="_blank" className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center hover:bg-gradient-to-tr from-yellow-500 via-pink-500 to-purple-500 transition-colors shadow-lg">
+                    <FaInstagram size={18} />
+                  </a>
+                  <a href="https://www.tiktok.com/@dosis_de_conocimiento" target="_blank" className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center hover:bg-slate-950 transition-colors shadow-lg">
+                    <FaTiktok size={18} />
+                  </a>
+                  <a href="https://madfer93.github.io/Perfil-comercial-Manuel/" target="_blank" className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center hover:bg-emerald-600 transition-colors shadow-lg">
+                    <FaGlobe size={18} />
+                  </a>
                 </div>
               </div>
               <div>
-                <h4 className="text-white font-bold mb-6 italic">Contacto Desarrollador</h4>
+                <h4 className="text-white font-bold mb-6 italic text-sm uppercase tracking-widest">Contacto Directo</h4>
                 <ul className="space-y-4 text-sm text-slate-400">
-                  <li>Manuel Fernando Madrid</li>
-                  <li>WhatsApp: +57 304 578 8873</li>
-                  <li>Ubicación: Villavicencio, Meta</li>
-                  <li>Colombia</li>
+                  <li className="font-bold text-white">Manuel Fernando Madrid</li>
+                  <li>
+                    <a href={`https://wa.me/573045788873?text=${encodeURIComponent('Hola Manuel, necesito soporte con el sistema DialyStock.')}`} target="_blank" className="hover:text-emerald-400 transition-colors flex items-center gap-2">
+                      <MessageCircle size={14} /> WhatsApp: +57 304 578 8873
+                    </a>
+                  </li>
+                  <li>
+                    <a href="mailto:madfer1993@gmail.com" className="hover:text-blue-400 transition-colors flex items-center gap-2">
+                      <Mail size={14} /> madfer1993@gmail.com
+                    </a>
+                  </li>
+                  <li>Villavicencio, Meta, Colombia</li>
                 </ul>
               </div>
               <div>
-                <h4 className="text-white font-bold mb-6">Enlaces Rápidos</h4>
+                <h4 className="text-white font-bold mb-6 italic text-sm uppercase tracking-widest">Institucional</h4>
                 <ul className="space-y-4 text-sm text-slate-400">
-                  <li><button onClick={() => setShowLogin(true)} className="hover:text-blue-400 transition-colors">Portales de Clínica</button></li>
-                  <li><button onClick={() => setShowLogin(true)} className="hover:text-blue-400 transition-colors">Panel Admin</button></li>
-                  <li><a href="#" className="hover:text-blue-400 transition-colors">Términos y Condiciones</a></li>
-                  <li><a href="#" className="hover:text-blue-400 transition-colors">Política de Privacidad</a></li>
+                  <li><Link href="/nosotros" className="hover:text-blue-400 transition-colors">¿Quiénes Somos?</Link></li>
+                  <li><Link href="/privacidad" className="hover:text-blue-400 transition-colors">Privacidad</Link></li>
+                  <li><Link href="/tratamiento-datos" className="hover:text-blue-400 transition-colors">Tratamiento de Datos</Link></li>
+                  <li><Link href="/habeas-data" className="hover:text-blue-400 transition-colors">Habeas Data</Link></li>
+                  <li className="pt-2">
+                    <button onClick={() => setShowLogin(true)} className="px-5 py-2.5 bg-white/5 border border-white/10 rounded-full hover:bg-blue-600 hover:border-blue-500 transition-all text-[10px] font-black uppercase tracking-widest">
+                      Acceso Admin
+                    </button>
+                  </li>
                 </ul>
               </div>
             </div>
@@ -361,9 +387,9 @@ export default function Home() {
 
             <button
               onClick={() => setShowLogin(false)}
-              className="mt-8 w-full text-slate-500 text-xs font-bold hover:text-white transition-colors uppercase tracking-widest"
+              className="mt-8 w-full text-slate-500 text-[10px] font-black hover:text-white transition-colors uppercase tracking-[0.3em]"
             >
-              Regresar a la página principal
+              Cerrar y Regresar
             </button>
           </div>
         </div>
