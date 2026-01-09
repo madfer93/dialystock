@@ -2,11 +2,17 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import crypto from 'crypto'
 
-// Cliente admin de Supabase (con service_role key para crear usuarios)
-const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+// Crear cliente admin de Supabase (lazy initialization para evitar errores en build)
+function getSupabaseAdmin() {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+    if (!supabaseUrl || !serviceRoleKey) {
+        throw new Error('Missing Supabase environment variables')
+    }
+
+    return createClient(supabaseUrl, serviceRoleKey)
+}
 
 // Verificar firma del webhook de Wompi
 function verifyWompiSignature(payload: string, signature: string, secret: string): boolean {
@@ -19,6 +25,7 @@ function verifyWompiSignature(payload: string, signature: string, secret: string
 
 export async function POST(req: Request) {
     try {
+        const supabaseAdmin = getSupabaseAdmin()
         const payload = await req.text()
         const signature = req.headers.get('x-wompi-signature') || ''
 
@@ -47,7 +54,6 @@ export async function POST(req: Request) {
         const transaction = event.data.transaction
         const customerEmail = transaction.customer_email
         const customerName = transaction.customer_data?.full_name || 'Admin'
-        const reference = transaction.reference // Puede contener info del plan
         const amountInCents = transaction.amount_in_cents
 
         // Determinar el plan basado en el monto
