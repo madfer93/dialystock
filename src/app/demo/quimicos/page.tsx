@@ -72,8 +72,8 @@ export default function DemoQuimico() {
                 </div>
             </nav>
 
-            <main className="max-w-5xl mx-auto py-16 px-6">
-                <div className="grid lg:grid-cols-2 gap-16 items-center">
+            <main className="max-w-7xl mx-auto py-16 px-6">
+                <div className="grid lg:grid-cols-[1fr_1.5fr] gap-16 items-center">
                     <div>
                         <div className="inline-flex items-center gap-2 px-3 py-1 bg-purple-500/10 border border-purple-500/20 rounded-full text-purple-400 text-[10px] font-black uppercase tracking-widest mb-6">
                             <Info size={12} /> Gestión de Laboratorio
