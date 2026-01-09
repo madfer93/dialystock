@@ -1,123 +1,51 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabaseClient'
-import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import {
+  Droplet,
+  FlaskConical,
+  Package,
+  Stethoscope,
+  ArrowRight,
+  MessageCircle,
+  CheckCircle2,
+  Activity,
+  ShieldCheck,
+  ChevronRight,
+  Send,
+  Building2,
+  Users
+} from 'lucide-react'
 
 export default function Home() {
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
+  const [showLogin, setShowLogin] = useState(false)
   const router = useRouter()
 
-  // Verificar sesión y redirigir según rol
   useEffect(() => {
     const checkSession = async () => {
-      console.log('Verificando sesión...')
-      const { data: { session }, error } = await supabase.auth.getSession()
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', session.user.id)
+          .single()
 
-      if (error || !session) {
-        console.log('No hay sesión activa.')
-        return
-      }
-
-      console.log('Sesión activa:', session.user.email)
-
-      // 1. Buscar perfil existente
-      let { data: profile } = await supabase
-        .from('profiles')
-        .select('*') // Traer todo para ver si existe pero está vacío
-        .eq('id', session.user.id)
-        .maybeSingle()
-
-      console.log('Perfil encontrado:', profile)
-
-      // 2. Si no tiene perfil, o su rol es "usuario" (default de supabase a veces), o está vacío
-      // Buscamos si tiene alguna invitación (incluso si ya fue marcada como usada, para recuperar el rol perdido)
-      if ((!profile || !profile.role || profile.role === 'usuario') && session.user.email) {
-        console.log('Buscando invitación (pendiente o recuperable)...')
-
-        // Primero buscar pendientes
-        let { data: invitacion } = await supabase
-          .from('invitaciones_pendientes')
-          .select('*')
-          .ilike('email', session.user.email)
-          .eq('usado', false)
-          .maybeSingle()
-
-        // Si no hay pendiente, buscar alguna usada recientemente para "auto-corregir" el perfil si sigue siendo "usuario"
-        if (!invitacion && profile?.role === 'usuario') {
-          console.log('Buscando invitación histórica para corregir rol...')
-          const { data: invHist } = await supabase
-            .from('invitaciones_pendientes')
-            .select('*')
-            .ilike('email', session.user.email)
-            .order('creado_en', { ascending: false })
-            .limit(1)
-            .maybeSingle()
-
-          if (invHist) invitacion = invHist
+        if (profile) {
+          const role = profile.role.toLowerCase().replace(/\s+/g, '_')
+          if (role === 'superadmin_global') router.push('/superadmin')
+          else if (role === 'sala_hd') router.push('/sala-hd')
+          else if (role === 'sala_pd') router.push('/sala-pd')
+          else if (role === 'farmacia') router.push('/farmacia')
+          else if (role === 'jefe_hd') router.push('/jefe-hd')
+          else if (role === 'jefe_pd') router.push('/jefe-pd')
+          else router.push('/farmacia') // Default
         }
-
-        if (invitacion) {
-          console.log('Invitación encontrada/recuperada:', invitacion)
-          const newRole = invitacion.role
-          const newArea = newRole === 'sala_hd' ? 'Sala HD' : 'Clínica'
-          let updateError
-
-          if (profile) {
-            // Actualizar perfil existente mal configurado
-            console.log('Corrigiendo perfil existente...')
-            const { error } = await supabase
-              .from('profiles')
-              .update({
-                role: newRole,
-                tenant_id: invitacion.tenant_id,
-                area: newArea
-              })
-              .eq('id', session.user.id)
-            updateError = error
-          } else {
-            // ... crear nuevo
-            const { error } = await supabase.from('profiles').insert({
-              id: session.user.id, email: session.user.email, role: newRole, tenant_id: invitacion.tenant_id, nombre: session.user.user_metadata?.full_name || '', area: newArea
-            })
-            updateError = error
-          }
-
-          if (!updateError && !invitacion.usado) {
-            await supabase.from('invitaciones_pendientes').update({ usado: true, usado_en: new Date().toISOString() }).eq('id', invitacion.id)
-          }
-
-          // Actualizar local
-          profile = { ...profile, role: newRole }
-        }
-      }
-
-      // 3. Redirección
-      // Normalizamos
-      const role = (profile?.role?.toLowerCase() || '').replace(/\s+/g, '_')
-      console.log('Rol normalizado:', role)
-
-      if (role === 'superadmin_global') {
-        router.push('/superadmin')
-      } else if (role === 'sala_hd') {
-        router.push('/sala-hd')
-      } else if (role === 'sala_pd') {
-        router.push('/sala-pd')
-      } else if (role === 'sala_quimico' || role === 'quimico') {
-        router.push('/sala-quimico')
-      } else if (role === 'jefe_hd') {
-        router.push('/jefe-hd')
-      } else if (role === 'jefe_pd') {
-        router.push('/jefe-pd')
-      } else if (role === 'admin_clinica') {
-        router.push('/clinica')
-      } else if (role === 'farmacia') {
-        router.push('/farmacia')
-      } else {
-        console.log('Rol no reconocido o sin acceso:', role)
-        setMessage(`Rol no autorizado: ${role}`)
       }
     }
     checkSession()
@@ -125,118 +53,321 @@ export default function Home() {
 
   const handleMagicLink = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!email) return
-
     setLoading(true)
     setMessage('')
 
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: window.location.origin, // Mejor que hardcoded localhost
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
       },
     })
 
     if (error) {
-      setMessage('Error: ' + error.message)
+      setMessage(`Error: ${error.message}`)
     } else {
-      setMessage('¡Magic Link enviado! Revisa tu correo y haz clic en el enlace.')
+      setMessage('✅ ¡Link de acceso enviado! Revisa tu correo.')
     }
     setLoading(false)
   }
 
+  const modules = [
+    {
+      title: 'Hemodiálisis (HD)',
+      desc: 'Gestión de líneas, filtros y suministros básicos para salas de HD.',
+      icon: Droplet,
+      color: 'from-blue-500 to-indigo-600',
+      badge: 'Crítico'
+    },
+    {
+      title: 'Diálisis Peritoneal (PD)',
+      desc: 'Control de soluciones, catéteres y equipos especializados para PD.',
+      icon: Activity,
+      color: 'from-emerald-500 to-teal-600',
+      badge: 'Especializado'
+    },
+    {
+      title: 'Químicos y Reactivos',
+      desc: 'Administración de concentrados, desinfectantes y reactivos.',
+      icon: FlaskConical,
+      color: 'from-purple-500 to-fuchsia-600',
+      badge: 'Precisión'
+    },
+    {
+      title: 'Farmacia & Despacho',
+      desc: 'Control centralizado de inventario, lotes y entregas a salas.',
+      icon: Package,
+      color: 'from-orange-500 to-red-600',
+      badge: 'Logística'
+    }
+  ]
+
   return (
-    <div className="min-h-screen bg-[#0f172a] text-slate-200 selection:bg-blue-500/30 font-sans">
-      {/* Background Decor */}
+    <div className="min-h-screen bg-[#0f172a] text-slate-200 selection:bg-blue-500/30">
+      {/* Dynamic Background */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-600/10 blur-[120px] rounded-full animate-pulse"></div>
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-600/10 blur-[120px] rounded-full animate-pulse" style={{ animationDelay: '2s' }}></div>
+        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-600/10 blur-[120px] rounded-full animate-pulse"></div>
+        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-purple-600/10 blur-[120px] rounded-full animate-pulse" style={{ animationDelay: '2s' }}></div>
       </div>
 
-      <div className="relative flex flex-col items-center justify-center min-h-screen p-6">
-        {/* Main Card */}
-        <div className="w-full max-w-lg bg-white/5 backdrop-blur-2xl border border-white/10 rounded-[2.5rem] shadow-2xl p-8 md:p-12 overflow-hidden group">
-
-          {/* Header/Logo */}
-          <div className="text-center mb-12 transform group-hover:scale-105 transition-transform duration-500">
-            <div className="inline-flex mb-8">
-              <img
-                src="/logo-dialystock.png"
-                alt="DialyStock Logo"
-                className="w-48 h-48 object-contain drop-shadow-[0_0_15px_rgba(59,130,246,0.4)]"
-              />
-            </div>
-            <h1 className="text-4xl md:text-5xl font-extrabold text-white tracking-tight mb-3">
-              Dialy<span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">Stock</span>
-            </h1>
-            <p className="text-slate-400 font-medium text-lg">Gestión Inteligente de Inventario Médico</p>
+      {/* Navbar */}
+      <nav className="relative z-50 border-b border-white/5 bg-slate-900/50 backdrop-blur-xl">
+        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <img src="/logo-dialystock.png" alt="Logo" className="h-10 w-10 object-contain" />
+            <span className="text-2xl font-black tracking-tighter text-white">Dialy<span className="text-blue-500">Stock</span></span>
           </div>
+          <div className="hidden md:flex items-center gap-8">
+            <a href="#modulos" className="text-sm font-semibold hover:text-blue-400 transition-colors">Módulos</a>
+            <a href="#beneficios" className="text-sm font-semibold hover:text-blue-400 transition-colors">Beneficios</a>
+            <button
+              onClick={() => setShowLogin(true)}
+              className="px-6 py-2.5 bg-blue-600 text-white rounded-full font-bold text-sm hover:bg-blue-500 transition-all shadow-lg shadow-blue-500/20"
+            >
+              Iniciar Sesión
+            </button>
+          </div>
+        </div>
+      </nav>
 
-          {/* Login Form */}
-          <form onSubmit={handleMagicLink} className="space-y-6">
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-slate-300 ml-1">Correo Electrónico</label>
-              <div className="relative group/input">
+      <main className="relative z-10">
+        {/* Hero Section */}
+        <section className="pt-20 pb-32 px-6">
+          <div className="max-w-7xl mx-auto text-center">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500/10 border border-blue-500/20 rounded-full text-blue-400 text-xs font-bold mb-8 animate-bounce">
+              <ShieldCheck size={14} />
+              NUEVA VERSIÓN 3.5 DISPONIBLE
+            </div>
+            <h1 className="text-6xl md:text-8xl font-black text-white tracking-tight mb-8 leading-[0.9]">
+              Gestión Médica <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-blue-600 to-indigo-600">Sin Errores.</span>
+            </h1>
+            <p className="max-w-2xl mx-auto text-xl text-slate-400 mb-12 leading-relaxed">
+              DialyStock es la plataforma líder para el control de inventarios en unidades renales.
+              Optimiza tus procesos de hemodiálisis y diálisis peritoneal con trazabilidad total.
+            </p>
+            <div className="flex flex-col md:flex-row items-center justify-center gap-4">
+              <button
+                onClick={() => setShowLogin(true)}
+                className="group w-full md:w-auto px-10 py-5 bg-white text-slate-900 rounded-2xl font-black text-lg hover:bg-blue-50 transition-all flex items-center justify-center gap-3 shadow-2xl"
+              >
+                Empezar Ahora
+                <ArrowRight className="group-hover:translate-x-1 transition-transform" />
+              </button>
+              <a
+                href={`https://wa.me/573045788873?text=${encodeURIComponent('Hola Manuel, me interesa una demostración de DialyStock.')}`}
+                target="_blank"
+                className="w-full md:w-auto px-10 py-5 bg-slate-800 text-white rounded-2xl font-bold text-lg hover:bg-slate-700 transition-all border border-white/10 flex items-center justify-center gap-3"
+              >
+                <MessageCircle />
+                Agendar Demo
+              </a>
+            </div>
+          </div>
+        </section>
+
+        {/* Modules Section */}
+        <section id="modulos" className="py-32 bg-slate-900/30">
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="text-center mb-20">
+              <h2 className="text-4xl font-black text-white mb-4">Ecosistema Integral</h2>
+              <p className="text-slate-400 font-medium">Módulos especializados para cada área de tu clínica renal.</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+              {modules.map((m, idx) => (
+                <div key={idx} className="group relative bg-slate-800/50 border border-white/10 rounded-[2rem] p-8 hover:bg-slate-800 transition-all hover:-translate-y-2 cursor-pointer overflow-hidden">
+                  <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${m.color} opacity-0 group-hover:opacity-10 blur-3xl transition-opacity`}></div>
+                  <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${m.color} flex items-center justify-center mb-6 shadow-lg shadow-black/20 group-hover:scale-110 transition-transform`}>
+                    <m.icon className="text-white" size={28} />
+                  </div>
+                  <div className="inline-block px-3 py-1 bg-white/5 rounded-full text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">
+                    {m.badge}
+                  </div>
+                  <h3 className="text-xl font-bold text-white mb-3">{m.title}</h3>
+                  <p className="text-sm text-slate-400 leading-relaxed mb-6">
+                    {m.desc}
+                  </p>
+                  <div className="flex items-center gap-2 text-blue-400 text-sm font-bold group-hover:gap-3 transition-all">
+                    Ver más <ChevronRight size={16} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Benefits Section */}
+        <section id="beneficios" className="py-32">
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="bg-gradient-to-br from-blue-600 to-indigo-800 rounded-[3rem] p-12 md:p-24 overflow-hidden relative">
+              <div className="absolute top-0 right-0 w-[40%] h-full bg-black/10 backdrop-blur-2xl skew-x-12 translate-x-1/2"></div>
+              <div className="relative z-10 grid md:grid-cols-2 gap-16 items-center">
+                <div>
+                  <h2 className="text-4xl md:text-5xl font-black text-white mb-8 leading-tight">
+                    ¿Por qué elegir DialyStock para tu clínica?
+                  </h2>
+                  <div className="space-y-6">
+                    {[
+                      { t: 'Trazabilidad Total', d: 'Seguimiento de lotes y fechas de vencimiento automatizado.' },
+                      { t: 'Reportes en Tiempo Real', d: 'Gráficos de consumo y stock críticos con un solo clic.' },
+                      { t: 'templates Recurrentes', d: 'Crea pedidos en segundos usando tus plantillas favoritas.' },
+                      { t: 'Soporte 24/7', d: 'Atención personalizada vía WhatsApp para soporte técnico.' }
+                    ].map((b, i) => (
+                      <div key={i} className="flex gap-4">
+                        <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+                          <CheckCircle2 className="text-white" size={20} />
+                        </div>
+                        <div>
+                          <h4 className="text-lg font-bold text-white">{b.t}</h4>
+                          <p className="text-blue-100 text-sm">{b.d}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div className="bg-white/10 backdrop-blur-md rounded-3xl p-8 border border-white/20">
+                  <div className="flex items-center gap-4 mb-8">
+                    <div className="w-12 h-12 rounded-2xl bg-white text-blue-600 flex items-center justify-center shadow-lg">
+                      <Activity size={24} />
+                    </div>
+                    <div>
+                      <p className="text-white font-black text-2xl">Métrica Real</p>
+                      <p className="text-blue-200 text-sm">Ahorro operativo garantizado</p>
+                    </div>
+                  </div>
+                  <div className="space-y-6">
+                    <div className="flex justify-between items-end">
+                      <span className="text-sm font-bold text-white">Eficiencia en Despacho</span>
+                      <span className="text-3xl font-black text-white">+85%</span>
+                    </div>
+                    <div className="w-full h-3 bg-white/10 rounded-full overflow-hidden">
+                      <div className="w-[85%] h-full bg-white rounded-full"></div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4 mt-8">
+                      <div className="p-4 bg-black/20 rounded-2xl border border-white/5">
+                        <p className="text-blue-200 text-[10px] font-bold uppercase">Clínicas</p>
+                        <p className="text-2xl font-black text-white">12+</p>
+                      </div>
+                      <div className="p-4 bg-black/20 rounded-2xl border border-white/5">
+                        <p className="text-blue-200 text-[10px] font-bold uppercase">Países</p>
+                        <p className="text-2xl font-black text-white">Región</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Footer */}
+        <footer className="py-20 border-t border-white/5 bg-slate-900">
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="grid md:grid-cols-4 gap-12 mb-20">
+              <div className="col-span-2">
+                <div className="flex items-center gap-3 mb-6">
+                  <img src="/logo-dialystock.png" alt="Logo" className="h-10 w-10" />
+                  <span className="text-2xl font-black text-white">DialyStock</span>
+                </div>
+                <p className="text-slate-400 max-w-sm leading-relaxed mb-8">
+                  Soluciones de software personalizadas para el sector salud.
+                  Impulsamos la digitalización de clínicas renales en toda Latinoamérica.
+                </p>
+                <div className="flex gap-4">
+                  {[MessageCircle, Building2, Users].map((Icon, i) => (
+                    <a key={i} href="#" className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center hover:bg-blue-600 transition-colors">
+                      <Icon size={18} />
+                    </a>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <h4 className="text-white font-bold mb-6 italic">Contacto Desarrollador</h4>
+                <ul className="space-y-4 text-sm text-slate-400">
+                  <li>Manuel Fernando Madrid</li>
+                  <li>WhatsApp: +57 304 578 8873</li>
+                  <li>Ubicación: Villavicencio, Meta</li>
+                  <li>Colombia</li>
+                </ul>
+              </div>
+              <div>
+                <h4 className="text-white font-bold mb-6">Enlaces Rápidos</h4>
+                <ul className="space-y-4 text-sm text-slate-400">
+                  <li><button onClick={() => setShowLogin(true)} className="hover:text-blue-400 transition-colors">Portales de Clínica</button></li>
+                  <li><button onClick={() => setShowLogin(true)} className="hover:text-blue-400 transition-colors">Panel Admin</button></li>
+                  <li><a href="#" className="hover:text-blue-400 transition-colors">Términos y Condiciones</a></li>
+                  <li><a href="#" className="hover:text-blue-400 transition-colors">Política de Privacidad</a></li>
+                </ul>
+              </div>
+            </div>
+            <div className="pt-8 border-t border-white/5 text-center">
+              <p className="text-xs text-slate-500 font-medium">
+                © 2025 DialyStock PRO V3.5 | Desarrollado con 💙 por Manuel Madrid para Variedades JyM
+              </p>
+            </div>
+          </div>
+        </footer>
+      </main>
+
+      {/* Login Modal Overlay */}
+      {showLogin && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+          <div
+            className="absolute inset-0 bg-slate-950/80 backdrop-blur-md"
+            onClick={() => setShowLogin(false)}
+          ></div>
+          <div className="relative w-full max-w-md bg-[#1e293b] border border-white/10 rounded-[2.5rem] shadow-2xl p-10 overflow-hidden animate-in zoom-in-95 duration-300">
+            <div className="text-center mb-8">
+              <div className="w-20 h-20 bg-blue-600/10 rounded-3xl flex items-center justify-center mx-auto mb-6">
+                <img src="/logo-dialystock.png" alt="Logo" className="w-12 h-12" />
+              </div>
+              <h2 className="text-2xl font-black text-white mb-2">Acceso al Sistema</h2>
+              <p className="text-slate-400 text-sm">Ingresa tu correo para recibir un link de acceso seguro.</p>
+            </div>
+
+            <form onSubmit={handleMagicLink} className="space-y-6">
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-300 ml-1 uppercase tracking-widest">Email Corporativo</label>
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-slate-900/50 border border-white/10 rounded-2xl px-5 py-4 text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all group-hover/input:border-white/20"
-                  placeholder="ejemplo@clinica.com"
+                  className="w-full bg-slate-900 border border-white/10 rounded-2xl px-6 py-4 text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium"
+                  placeholder="nombre@clinica.com"
                   required
                 />
               </div>
-            </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-blue-600 text-white rounded-2xl py-4 font-black text-lg hover:bg-blue-500 transition-all shadow-xl shadow-blue-600/20 disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {loading ? 'Enviando...' : (
+                  <>
+                    <span>Enviar Magic Link</span>
+                    <Send size={18} />
+                  </>
+                )}
+              </button>
+            </form>
+
+            {message && (
+              <div className={`mt-6 p-4 rounded-2xl text-center text-sm font-bold ${message.includes('Error') ? 'bg-red-500/10 text-red-400 border border-red-500/20' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'}`}>
+                {message}
+              </div>
+            )}
 
             <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-white text-[#0f172a] rounded-2xl py-4 font-bold text-lg hover:bg-slate-200 transition-all transform active:scale-[0.98] shadow-lg shadow-white/5 disabled:opacity-50 flex items-center justify-center gap-2"
+              onClick={() => setShowLogin(false)}
+              className="mt-8 w-full text-slate-500 text-xs font-bold hover:text-white transition-colors uppercase tracking-widest"
             >
-              {loading ? (
-                <>
-                  <div className="w-5 h-5 border-2 border-[#0f172a]/30 border-t-[#0f172a] rounded-full animate-spin"></div>
-                  <span>Enviando enlace...</span>
-                </>
-              ) : (
-                <>
-                  <span>Ingresar con Magic Link</span>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
-                </>
-              )}
+              Regresar a la página principal
             </button>
-          </form>
-
-          {/* Messages */}
-          {message && (
-            <div className={`mt-8 p-4 rounded-2xl text-center font-medium animate-in fade-in slide-in-from-top-4 duration-300 ${message.includes('Error')
-              ? 'bg-red-500/10 border border-red-500/20 text-red-400'
-              : 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400'
-              }`}>
-              {message}
-            </div>
-          )}
-
-          {/* Support Integration */}
-          <div className="mt-12 pt-8 border-t border-white/5 flex flex-col items-center gap-4">
-            <p className="text-slate-500 text-sm font-medium">¿Necesitas ayuda con el acceso?</p>
-            <a
-              href={`https://wa.me/573045788873?text=${encodeURIComponent('Hola Manuel, necesito ayuda para ingresar al sistema DialyStock.')}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 px-4 py-2 bg-emerald-500/10 text-emerald-400 rounded-full text-xs font-bold hover:bg-emerald-500 hover:text-white transition-all border border-emerald-500/20"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
-              Soporte Directo Manuel Madrid
-            </a>
           </div>
         </div>
-
-        {/* Root Footer */}
-        <footer className="mt-12 text-center text-slate-500">
-          <p className="text-sm">💻 DialyStock PRO © 2025 | Todos los derechos reservados</p>
-        </footer>
-      </div>
+      )}
     </div>
   )
 }
