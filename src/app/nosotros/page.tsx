@@ -1,6 +1,6 @@
 'use client'
 
-import { Leaf, Target, Eye, ArrowLeft, Clock, Zap } from 'lucide-react'
+import { Leaf, Target, Eye, ArrowLeft, Clock, Zap, ShieldCheck, Activity } from 'lucide-react'
 import Link from 'next/link'
 
 export default function Nosotros() {
@@ -87,12 +87,15 @@ export default function Nosotros() {
                             { i: ShieldCheck, t: 'Seguridad', c: 'text-emerald-400' },
                             { i: Zap, t: 'Agilidad', c: 'text-yellow-400' },
                             { i: Activity, t: 'Trazabilidad', c: 'text-purple-400' }
-                        ].map((p, i) => (
-                            <div key={i} className="p-6 bg-slate-800/30 border border-white/5 rounded-2xl">
-                                <p.i className={`${p.c} mx-auto mb-3`} size={24} />
-                                <p className="text-xs font-bold uppercase tracking-widest">{p.t}</p>
-                            </div>
-                        ))}
+                        ].map((p, i) => {
+                            const Icon = p.i
+                            return (
+                                <div key={i} className="p-6 bg-slate-800/30 border border-white/5 rounded-2xl">
+                                    <Icon className={`${p.c} mx-auto mb-3`} size={24} />
+                                    <p className="text-xs font-bold uppercase tracking-widest">{p.t}</p>
+                                </div>
+                            )
+                        })}
                     </div>
                 </section>
             </main>
