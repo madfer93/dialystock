@@ -22,6 +22,8 @@ export default function SuperAdminHome() {
   const [totalSolicitudes, setTotalSolicitudes] = useState(0)
   const [recentSolicitudes, setRecentSolicitudes] = useState<any[]>([])
   const [usuariosGlobales, setUsuariosGlobales] = useState<any[]>([])
+  const [metricasClinicas, setMetricasClinicas] = useState<any[]>([])
+  const [eventosSistema, setEventosSistema] = useState<any[]>([])
   const [filterClinica, setFilterClinica] = useState('all')
   const [loading, setLoading] = useState(true)
 
@@ -35,7 +37,7 @@ export default function SuperAdminHome() {
       const [usersCount, prodsCount, solsCount, recentSols, allUsers] = await Promise.all([
         supabase.from('profiles').select('*', { count: 'exact', head: true }),
         supabase.from('productos').select('*', { count: 'exact', head: true }),
-        supabase.from('solicitudes').select('*', { count: 'exact', head: true }),
+        supabase.from('solicitudes').select('*, clinicas(nombre)'), // Traemos todos para métricas
         supabase.from('solicitudes').select('*, clinicas(nombre)').order('created_at', { ascending: false }).limit(5),
         supabase.from('profiles').select('*, clinicas:tenant_id(nombre)').order('created_at', { ascending: false }).limit(10)
       ])
@@ -45,6 +47,35 @@ export default function SuperAdminHome() {
       setTotalSolicitudes(solsCount.count || 0)
       setRecentSolicitudes(recentSols.data || [])
       setUsuariosGlobales(allUsers.data || [])
+
+      // 3. Calcular métricas por clínica
+      const counts: Record<string, number> = {}
+      solsCount.data?.forEach((s: any) => {
+        const name = s.clinicas?.nombre || 'Desconocida'
+        counts[name] = (counts[name] || 0) + 1
+      })
+      const metrics = Object.entries(counts).map(([name, count]) => ({ name, count }))
+      setMetricasClinicas(metrics.sort((a, b) => b.count - a.count))
+
+      // 4. Consolidar Eventos del Sistema (Auditoría)
+      const eventos = [
+        ...(clinicasData || []).map((c: any) => ({
+          tipo: 'CLINICA_CREADA',
+          desc: `Nueva clínica: ${c.nombre}`,
+          fecha: c.created_at,
+          icon: Building2,
+          color: 'text-blue-500'
+        })),
+        ...(allUsers.data || []).map((u: any) => ({
+          tipo: 'USUARIO_REGISTRADO',
+          desc: `Usuario nuevo: ${u.email}`,
+          fecha: u.created_at,
+          icon: UserPlus,
+          color: 'text-indigo-500'
+        }))
+      ].sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime()).slice(0, 8)
+
+      setEventosSistema(eventos)
 
       setLoading(false)
     }
@@ -294,6 +325,57 @@ export default function SuperAdminHome() {
                   </div>
                 ))
               )}
+            </div>
+          </div>
+
+          <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm">
+            <h3 className="text-lg font-bold text-[#0f172a] mb-6 flex items-center gap-2">
+              <TrendingUp className="text-blue-500" size={20} />
+              Volumen por Clínica
+            </h3>
+            <div className="space-y-4">
+              {metricasClinicas.length === 0 ? (
+                <p className="text-slate-400 text-sm italic">Sin datos de volumen.</p>
+              ) : (
+                metricasClinicas.map((m, idx) => {
+                  const maxCount = metricasClinicas[0].count;
+                  const percentage = (m.count / maxCount) * 100;
+                  return (
+                    <div key={idx} className="space-y-1">
+                      <div className="flex justify-between text-xs font-bold mb-1">
+                        <span className="text-slate-600 truncate max-w-[120px]">{m.name}</span>
+                        <span className="text-blue-600">{m.count} sols</span>
+                      </div>
+                      <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                        <div
+                          className="bg-blue-500 h-full rounded-full transition-all duration-1000"
+                          style={{ width: `${percentage}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  )
+                })
+              )}
+            </div>
+          </div>
+
+          <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm">
+            <h3 className="text-lg font-bold text-[#0f172a] mb-6 flex items-center gap-2">
+              <ShieldCheck className="text-indigo-500" size={20} />
+              Auditoría de Eventos
+            </h3>
+            <div className="space-y-4">
+              {eventosSistema.map((ev, idx) => (
+                <div key={idx} className="flex items-start gap-3 border-l-2 border-slate-100 pl-4 py-1">
+                  <div className={`mt-1 ${ev.color}`}>
+                    <ev.icon size={14} />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-[#0f172a]">{ev.desc}</p>
+                    <p className="text-[10px] text-slate-400">{new Date(ev.fecha).toLocaleString()}</p>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 
