@@ -1,0 +1,152 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import { FlaskConical, ArrowLeft, Play, Info, CheckCircle2, Thermometer, Beaker, ShieldCheck } from 'lucide-react'
+import Link from 'next/link'
+
+export default function DemoQuimico() {
+    const [step, setStep] = useState(0)
+    const [isPlaying, setIsPlaying] = useState(false)
+
+    const steps = [
+        {
+            t: "Inventario de Reactivos",
+            d: "Consulta instantánea de niveles de concentrados y desinfectantes.",
+            icon: FlaskConical,
+            visual: "Concentrado A: 450L | Concentrado B: 300L"
+        },
+        {
+            t: "Control de Calidad",
+            d: "Registro de lotes y validación de certificados de calidad.",
+            icon: ShieldCheck,
+            visual: "QC Status: APROBADO Lote Q-99"
+        },
+        {
+            t: "Monitoreo de Consumo",
+            d: "Alertas automáticas cuando el stock baja del 15%.",
+            icon: Thermometer,
+            visual: "ALERTA: Stock Crítico Ácido Acético"
+        },
+        {
+            t: "Orden de Reposición",
+            d: "Solicitud de compra generada automáticamente para Jefatura.",
+            icon: Beaker,
+            visual: "Solicitud RE-505 Enviada"
+        }
+    ]
+
+    const playSound = () => {
+        const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3')
+        audio.play().catch(() => { })
+    }
+
+    useEffect(() => {
+        if (isPlaying) {
+            const timer = setInterval(() => {
+                setStep((prev) => {
+                    if (prev < steps.length - 1) {
+                        playSound()
+                        return prev + 1
+                    }
+                    setIsPlaying(false)
+                    return prev
+                })
+            }, 3000)
+            return () => clearInterval(timer)
+        }
+    }, [isPlaying])
+
+    return (
+        <div className="min-h-screen bg-[#020617] text-slate-300">
+            <nav className="border-b border-white/5 bg-slate-900/50 backdrop-blur-xl">
+                <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+                    <Link href="/" className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
+                            <FlaskConical className="text-white" size={18} />
+                        </div>
+                        <span className="font-black text-white uppercase tracking-widest text-sm">Demo Químicos</span>
+                    </Link>
+                    <Link href="/" className="text-xs font-bold text-slate-500 hover:text-white uppercase tracking-widest flex items-center gap-2">
+                        <ArrowLeft size={14} /> Salir
+                    </Link>
+                </div>
+            </nav>
+
+            <main className="max-w-5xl mx-auto py-16 px-6">
+                <div className="grid lg:grid-cols-2 gap-16 items-center">
+                    <div>
+                        <div className="inline-flex items-center gap-2 px-3 py-1 bg-purple-500/10 border border-purple-500/20 rounded-full text-purple-400 text-[10px] font-black uppercase tracking-widest mb-6">
+                            <Info size={12} /> Gestión de Laboratorio
+                        </div>
+                        <h1 className="text-5xl font-black text-white mb-6 leading-tight">Módulo de Químicos</h1>
+                        <p className="text-slate-400 text-lg leading-relaxed mb-8">
+                            Administra reactivos y concentrados con precisión quirúrgica y control de calidad total.
+                        </p>
+
+                        <div className="space-y-4 mb-12">
+                            {steps.map((s, idx) => (
+                                <div key={idx} className={`flex gap-4 p-4 rounded-2xl border transition-all ${step === idx ? 'bg-purple-600/10 border-purple-500/30 ring-1 ring-purple-500/20' : 'bg-white/5 border-white/5 opacity-50'}`}>
+                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${step === idx ? 'bg-purple-600 text-white' : 'bg-slate-800 text-slate-500'}`}>
+                                        <s.icon size={20} />
+                                    </div>
+                                    <div>
+                                        <h3 className={`font-bold transition-colors ${step === idx ? 'text-white' : 'text-slate-500'}`}>{s.t}</h3>
+                                        <p className="text-xs text-slate-400 mt-1">{s.d}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {!isPlaying && step === 0 && (
+                            <button
+                                onClick={() => { setIsPlaying(true); playSound(); }}
+                                className="w-full md:w-auto px-10 py-5 bg-purple-600 text-white rounded-2xl font-black text-lg hover:bg-purple-500 transition-all flex items-center justify-center gap-3 shadow-xl shadow-purple-600/20"
+                            >
+                                <Play fill="white" /> Iniciar Recorrido
+                            </button>
+                        )}
+
+                        {!isPlaying && step === steps.length - 1 && (
+                            <div className="animate-in slide-in-from-top-4 duration-500">
+                                <div className="p-6 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex items-center gap-4">
+                                    <CheckCircle2 className="text-emerald-500" size={32} />
+                                    <div>
+                                        <p className="font-bold text-emerald-400">¡Control Químico Total!</p>
+                                        <p className="text-xs text-emerald-300">Precisión garantizada en cada mililitro.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="relative">
+                        <div className="absolute inset-0 bg-purple-600/20 blur-[100px] rounded-full"></div>
+                        <div className="relative bg-slate-900 border border-purple-900/30 rounded-[2.5rem] aspect-video shadow-2xl overflow-hidden">
+                            <div className="h-full w-full flex flex-col">
+                                <div className="p-4 border-b border-white/5 bg-slate-800/50 flex items-center justify-between">
+                                    <div className="flex gap-1.5">
+                                        <div className="w-2.5 h-2.5 rounded-full bg-red-500/50"></div>
+                                        <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/50"></div>
+                                        <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/50"></div>
+                                    </div>
+                                    <div className="px-3 py-1 bg-black/30 rounded-full text-[8px] font-bold uppercase tracking-tighter text-slate-500">chem_admin_v3.0</div>
+                                </div>
+                                <div className="flex-1 flex items-center justify-center p-12 text-center">
+                                    <div key={step} className="animate-in zoom-in duration-700">
+                                        <div className="w-24 h-24 bg-purple-600/20 rounded-3xl flex items-center justify-center mx-auto mb-8 border border-purple-500/30">
+                                            {(() => {
+                                                const Icon = steps[step].icon
+                                                return <Icon className="text-purple-500 animate-pulse" size={48} />
+                                            })()}
+                                        </div>
+                                        <h2 className="text-3xl font-black text-white mb-2 tracking-tight">{steps[step].visual}</h2>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    )
+}

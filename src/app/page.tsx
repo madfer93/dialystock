@@ -20,17 +20,36 @@ import {
   Facebook,
   Instagram,
   Mail,
-  Globe
+  Globe,
+  HelpCircle,
+  Plus,
+  Minus
 } from 'lucide-react'
 import { FaTiktok, FaFacebook, FaInstagram, FaGlobe } from 'react-icons/fa'
 import Link from 'next/link'
+import SharedFooter from '@/components/SharedFooter'
 
 export default function Home() {
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [showLogin, setShowLogin] = useState(false)
+  const [openFaq, setOpenFaq] = useState<number | null>(null)
+  const [faqs, setFaqs] = useState<{ q: string, a: string }[]>([
+    { q: "¿Cómo garantiza DialyStock la seguridad de mis datos?", a: "Utilizamos encriptación de grado médico y autenticación por Magic Link para asegurar que solo el personal autorizado acceda a la información." },
+    { q: "¿El sistema se puede personalizar para mi clínica?", a: "¡Sí! DialyStock es modular. Podemos ajustar los catálogos de productos y los flujos de trabajo según las necesidades específicas de tu unidad renal." },
+    { q: "¿Es necesario instalar algún software?", a: "No. DialyStock es una plataforma 100% web y PWA, lo que significa que puedes acceder desde cualquier navegador o dispositivo móvil sin instalaciones complejas." },
+    { q: "¿Qué pasa si me quedo sin internet?", a: "Estamos trabajando en un modo offline robusto para que la operación no se detenga. Tus datos se sincronizarán automáticamente al recuperar la conexión." }
+  ])
   const router = useRouter()
+
+  useEffect(() => {
+    const fetchFaqs = async () => {
+      const { data } = await supabase.from('app_settings').select('data').eq('category', 'faq').single()
+      if (data && data.data.items) setFaqs(data.data.items)
+    }
+    fetchFaqs()
+  }, [])
 
   useEffect(() => {
     const checkSession = async () => {
@@ -83,28 +102,32 @@ export default function Home() {
       desc: 'Gestión de líneas, filtros y suministros básicos para salas de HD.',
       icon: Droplet,
       color: 'from-blue-500 to-indigo-600',
-      badge: 'Crítico'
+      badge: 'Crítico',
+      link: '/demo/hd'
     },
     {
       title: 'Diálisis Peritoneal (PD)',
       desc: 'Control de soluciones, catéteres y equipos especializados para PD.',
       icon: Activity,
       color: 'from-emerald-500 to-teal-600',
-      badge: 'Especializado'
+      badge: 'Especializado',
+      link: '/demo/pd'
     },
     {
       title: 'Químicos y Reactivos',
       desc: 'Administración de concentrados, desinfectantes y reactivos.',
       icon: FlaskConical,
       color: 'from-purple-500 to-fuchsia-600',
-      badge: 'Precisión'
+      badge: 'Precisión',
+      link: '/demo/quimicos'
     },
     {
       title: 'Farmacia & Despacho',
       desc: 'Control centralizado de inventario, lotes y entregas a salas.',
       icon: Package,
       color: 'from-orange-500 to-red-600',
-      badge: 'Logística'
+      badge: 'Logística',
+      link: '/demo/farmacia'
     }
   ]
 
@@ -181,23 +204,27 @@ export default function Home() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-              {modules.map((m, idx) => (
-                <div key={idx} className="group relative bg-slate-800/50 border border-white/10 rounded-[2rem] p-8 hover:bg-slate-800 transition-all hover:-translate-y-2 cursor-pointer overflow-hidden">
+              {modules.map((m: any, idx) => (
+                <Link
+                  key={idx}
+                  href={m.link}
+                  className="group relative bg-slate-800/50 border border-white/10 rounded-[2rem] p-8 hover:bg-slate-800 transition-all hover:-translate-y-2 cursor-pointer overflow-hidden border-b-4 border-b-transparent hover:border-b-blue-500 shadow-xl"
+                >
                   <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${m.color} opacity-0 group-hover:opacity-10 blur-3xl transition-opacity`}></div>
                   <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${m.color} flex items-center justify-center mb-6 shadow-lg shadow-black/20 group-hover:scale-110 transition-transform`}>
                     <m.icon className="text-white" size={28} />
                   </div>
-                  <div className="inline-block px-3 py-1 bg-white/5 rounded-full text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">
+                  <div className="inline-block px-3 py-1 bg-white/5 rounded-full text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">
                     {m.badge}
                   </div>
                   <h3 className="text-xl font-bold text-white mb-3">{m.title}</h3>
                   <p className="text-sm text-slate-400 leading-relaxed mb-6">
                     {m.desc}
                   </p>
-                  <div className="flex items-center gap-2 text-blue-400 text-sm font-bold group-hover:gap-3 transition-all">
-                    Ver más <ChevronRight size={16} />
+                  <div className="flex items-center gap-2 text-blue-400 text-[10px] font-black uppercase tracking-widest group-hover:gap-3 transition-all">
+                    Simular Proceso <ChevronRight size={14} />
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           </div>
@@ -267,73 +294,40 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Footer */}
-        <footer className="py-20 border-t border-white/5 bg-slate-900">
-          <div className="max-w-7xl mx-auto px-6">
-            <div className="grid md:grid-cols-4 gap-12 mb-20">
-              <div className="col-span-2">
-                <div className="flex items-center gap-3 mb-6">
-                  <img src="/logo-dialystock.png" alt="Logo" className="h-10 w-10" />
-                  <span className="text-2xl font-black text-white">DialyStock</span>
-                </div>
-                <p className="text-slate-400 max-w-sm leading-relaxed mb-8">
-                  Soluciones de software personalizadas para el sector salud.
-                  Impulsamos la digitalización de clínicas renales en toda Latinoamérica.
-                </p>
-                <div className="flex gap-4">
-                  <a href="https://www.facebook.com/profile.php?id=61583530845268" target="_blank" className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center hover:bg-blue-600 transition-colors shadow-lg shadow-blue-500/10">
-                    <FaFacebook size={18} />
-                  </a>
-                  <a href="https://www.instagram.com/dosis_de_conocimiento/" target="_blank" className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center hover:bg-gradient-to-tr from-yellow-500 via-pink-500 to-purple-500 transition-colors shadow-lg">
-                    <FaInstagram size={18} />
-                  </a>
-                  <a href="https://www.tiktok.com/@dosis_de_conocimiento" target="_blank" className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center hover:bg-slate-950 transition-colors shadow-lg">
-                    <FaTiktok size={18} />
-                  </a>
-                  <a href="https://madfer93.github.io/Perfil-comercial-Manuel/" target="_blank" className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center hover:bg-emerald-600 transition-colors shadow-lg">
-                    <FaGlobe size={18} />
-                  </a>
-                </div>
+        {/* FAQ Section */}
+        <section className="py-32 bg-slate-900/50">
+          <div className="max-w-3xl mx-auto px-6">
+            <div className="text-center mb-16">
+              <div className="inline-flex p-3 rounded-2xl bg-blue-500/10 text-blue-400 mb-4">
+                <HelpCircle size={24} />
               </div>
-              <div>
-                <h4 className="text-white font-bold mb-6 italic text-sm uppercase tracking-widest">Contacto Directo</h4>
-                <ul className="space-y-4 text-sm text-slate-400">
-                  <li className="font-bold text-white">Manuel Fernando Madrid</li>
-                  <li>
-                    <a href={`https://wa.me/573045788873?text=${encodeURIComponent('Hola Manuel, necesito soporte con el sistema DialyStock.')}`} target="_blank" className="hover:text-emerald-400 transition-colors flex items-center gap-2">
-                      <MessageCircle size={14} /> WhatsApp: +57 304 578 8873
-                    </a>
-                  </li>
-                  <li>
-                    <a href="mailto:madfer1993@gmail.com" className="hover:text-blue-400 transition-colors flex items-center gap-2">
-                      <Mail size={14} /> madfer1993@gmail.com
-                    </a>
-                  </li>
-                  <li>Villavicencio, Meta, Colombia</li>
-                </ul>
-              </div>
-              <div>
-                <h4 className="text-white font-bold mb-6 italic text-sm uppercase tracking-widest">Institucional</h4>
-                <ul className="space-y-4 text-sm text-slate-400">
-                  <li><Link href="/nosotros" className="hover:text-blue-400 transition-colors">¿Quiénes Somos?</Link></li>
-                  <li><Link href="/privacidad" className="hover:text-blue-400 transition-colors">Privacidad</Link></li>
-                  <li><Link href="/tratamiento-datos" className="hover:text-blue-400 transition-colors">Tratamiento de Datos</Link></li>
-                  <li><Link href="/habeas-data" className="hover:text-blue-400 transition-colors">Habeas Data</Link></li>
-                  <li className="pt-2">
-                    <button onClick={() => setShowLogin(true)} className="px-5 py-2.5 bg-white/5 border border-white/10 rounded-full hover:bg-blue-600 hover:border-blue-500 transition-all text-[10px] font-black uppercase tracking-widest">
-                      Acceso Admin
-                    </button>
-                  </li>
-                </ul>
-              </div>
+              <h2 className="text-4xl font-black text-white mb-4">Preguntas Frecuentes</h2>
+              <p className="text-slate-400">Todo lo que necesitas saber sobre la plataforma.</p>
             </div>
-            <div className="pt-8 border-t border-white/5 text-center">
-              <p className="text-xs text-slate-500 font-medium">
-                © 2025 DialyStock PRO V3.5 | Desarrollado con 💙 por Manuel Madrid para Variedades JyM
-              </p>
+
+            <div className="space-y-4">
+              {faqs.map((faq, idx) => (
+                <div
+                  key={idx}
+                  className="bg-slate-800/50 border border-white/10 rounded-2xl overflow-hidden transition-all duration-300"
+                >
+                  <button
+                    onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
+                    className="w-full px-8 py-6 flex items-center justify-between text-left hover:bg-white/5 transition-colors"
+                  >
+                    <span className="font-bold text-white pr-8">{faq.q}</span>
+                    {openFaq === idx ? <Minus className="text-blue-500 shrink-0" size={20} /> : <Plus className="text-slate-500 shrink-0" size={20} />}
+                  </button>
+                  <div className={`px-8 overflow-hidden transition-all duration-300 ease-in-out ${openFaq === idx ? 'max-h-40 py-6 border-t border-white/5 opacity-100' : 'max-h-0 opacity-0'}`}>
+                    <p className="text-slate-400 text-sm leading-relaxed">{faq.a}</p>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
-        </footer>
+        </section>
+
+        <SharedFooter />
       </main>
 
       {/* Login Modal Overlay */}

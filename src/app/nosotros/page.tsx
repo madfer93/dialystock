@@ -2,8 +2,26 @@
 
 import { Leaf, Target, Eye, ArrowLeft, Clock, Zap, ShieldCheck, Activity } from 'lucide-react'
 import Link from 'next/link'
+import SharedFooter from '@/components/SharedFooter'
+import { useEffect, useState } from 'react'
+import { supabase } from '@/lib/supabaseClient'
 
 export default function Nosotros() {
+    const [nosotros, setNosotros] = useState({
+        mision: 'Nuestra misión es transformar la gestión operativa de las unidades renales a través de herramientas digitales de vanguardia. Buscamos eliminar el error humano, garantizar la trazabilidad total de los suministros críticos y permitir que el personal de salud se enfoque en lo que más importa: el cuidado del paciente.',
+        vision: 'Para el año 2028, DialyStock será el estándar de oro en la gestión de inventario médico digital para clínicas renales en toda Latinoamérica. Aspiramos a ser una plataforma integral de datos que prediga necesidades, optimice recursos y eleve la eficiencia hospitalaria a niveles de clase mundial.',
+        paper_savings: '25 → 0',
+        time_saved: '-70%'
+    })
+
+    useEffect(() => {
+        const fetchNosotros = async () => {
+            const { data } = await supabase.from('app_settings').select('data').eq('category', 'nosotros').single()
+            if (data) setNosotros(data.data)
+        }
+        fetchNosotros()
+    }, [])
+
     return (
         <div className="min-h-screen bg-[#0f172a] text-slate-200">
             {/* Background Decor */}
@@ -37,7 +55,7 @@ export default function Nosotros() {
                         </div>
                         <h2 className="text-2xl font-black text-white mb-4">Misión</h2>
                         <p className="text-slate-400 leading-relaxed text-sm">
-                            Nuestra misión es transformar la gestión operativa de las unidades renales a través de herramientas digitales de vanguardia. Buscamos eliminar el error humano, garantizar la trazabilidad total de los suministros críticos y permitir que el personal de salud se enfoque en lo que más importa: **el cuidado del paciente.**
+                            {nosotros.mision}
                         </p>
                     </div>
 
@@ -47,7 +65,7 @@ export default function Nosotros() {
                         </div>
                         <h2 className="text-2xl font-black text-white mb-4">Visión</h2>
                         <p className="text-slate-400 leading-relaxed text-sm">
-                            Para el año 2028, DialyStock será el estándar de oro en la gestión de inventario médico digital para clínicas renales en toda Latinoamérica. Aspiramos a ser una plataforma integral de datos que prediga necesidades, optimice recursos y eleve la eficiencia hospitalaria a niveles de clase mundial.
+                            {nosotros.vision}
                         </p>
                     </div>
                 </section>
@@ -61,7 +79,7 @@ export default function Nosotros() {
                         <h2 className="text-4xl font-black text-white mb-6">Compromiso con el Planeta</h2>
                         <div className="grid md:grid-cols-3 gap-8 mt-12">
                             <div className="bg-black/10 backdrop-blur-sm p-6 rounded-2xl border border-white/10">
-                                <p className="text-4xl font-black text-white mb-2">25 → 0</p>
+                                <p className="text-4xl font-black text-white mb-2">{nosotros.paper_savings}</p>
                                 <p className="text-xs font-bold text-emerald-100 uppercase tracking-widest">Hojas de papel por solicitud</p>
                             </div>
                             <div className="bg-black/10 backdrop-blur-sm p-6 rounded-2xl border border-white/10">
@@ -69,7 +87,7 @@ export default function Nosotros() {
                                 <p className="text-xs font-bold text-emerald-100 uppercase tracking-widest">Operación Digital Libres de Tinta</p>
                             </div>
                             <div className="bg-black/10 backdrop-blur-sm p-6 rounded-2xl border border-white/10">
-                                <p className="text-4xl font-black text-white mb-2">-70%</p>
+                                <p className="text-4xl font-black text-white mb-2">{nosotros.time_saved}</p>
                                 <p className="text-xs font-bold text-emerald-100 uppercase tracking-widest">Tiempo Ahorrado en Trámites</p>
                             </div>
                         </div>
@@ -100,12 +118,7 @@ export default function Nosotros() {
                 </section>
             </main>
 
-            <footer className="py-20 border-t border-white/5 bg-slate-900 mt-20 text-center">
-                <p className="text-xs text-slate-500 font-bold uppercase tracking-widest leading-loose">
-                    DialyStock PRO | Una solución tecnológica de Manuel Madrid <br />
-                    © 2025 Todos los derechos reservados
-                </p>
-            </footer>
+            <SharedFooter />
         </div>
     )
 }

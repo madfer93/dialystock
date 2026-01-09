@@ -2,6 +2,7 @@
 
 import { FileText, Database, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
+import SharedFooter from '@/components/SharedFooter'
 
 export default function TratamientoDatos() {
     return (
@@ -70,10 +71,7 @@ export default function TratamientoDatos() {
                 </div>
             </main>
 
-            <footer className="py-12 border-t border-white/5 text-center text-xs text-slate-600 font-bold uppercase tracking-widest leading-loose">
-                Ley 1581 de 2012 - Colombia <br />
-                DialyStock PRO | Manuel Madrid
-            </footer>
+            <SharedFooter />
         </div>
     )
 }

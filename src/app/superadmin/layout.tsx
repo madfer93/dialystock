@@ -12,7 +12,8 @@ import {
   LogOut,
   ShieldCheck,
   Menu,
-  X
+  X,
+  Settings
 } from 'lucide-react'
 
 export default function SuperAdminLayout({
@@ -46,6 +47,7 @@ export default function SuperAdminLayout({
     { name: 'Dashboard', href: '/superadmin', icon: LayoutDashboard },
     { name: 'Nueva Clínica', href: '/superadmin/clinicas/nueva', icon: Building2 },
     { name: 'Nuevo Admin', href: '/superadmin/usuario/nuevo', icon: UserPlus },
+    { name: 'Configuración', href: '/superadmin/config', icon: Settings },
   ]
 
   if (!user) return (

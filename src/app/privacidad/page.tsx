@@ -2,6 +2,7 @@
 
 import { Shield, Lock, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
+import SharedFooter from '@/components/SharedFooter'
 
 export default function Privacidad() {
     return (
@@ -76,10 +77,7 @@ export default function Privacidad() {
                 </div>
             </main>
 
-            <footer className="py-12 border-t border-white/5 text-center text-xs text-slate-600 font-bold uppercase tracking-widest leading-loose">
-                Última actualización: Enero 2025 <br />
-                DialyStock PRO | Manuel Madrid
-            </footer>
+            <SharedFooter />
         </div>
     )
 }
