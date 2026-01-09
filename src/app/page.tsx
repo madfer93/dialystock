@@ -36,10 +36,26 @@ export default function Home() {
   const [showLogin, setShowLogin] = useState(false)
   const [openFaq, setOpenFaq] = useState<number | null>(null)
   const [faqs, setFaqs] = useState<{ q: string, a: string }[]>([
-    { q: "¿Cómo garantiza DialyStock la seguridad de mis datos?", a: "Utilizamos encriptación de grado médico y autenticación por Magic Link para asegurar que solo el personal autorizado acceda a la información." },
-    { q: "¿El sistema se puede personalizar para mi clínica?", a: "¡Sí! DialyStock es modular. Podemos ajustar los catálogos de productos y los flujos de trabajo según las necesidades específicas de tu unidad renal." },
-    { q: "¿Es necesario instalar algún software?", a: "No. DialyStock es una plataforma 100% web y PWA, lo que significa que puedes acceder desde cualquier navegador o dispositivo móvil sin instalaciones complejas." },
-    { q: "¿Qué pasa si me quedo sin internet?", a: "Estamos trabajando en un modo offline robusto para que la operación no se detenga. Tus datos se sincronizarán automáticamente al recuperar la conexión." }
+    {
+      q: "¿De qué manera DialyStock protege el medio ambiente?",
+      a: "Eliminando por completo la necesidad de formularios y registros físicos. Una clínica promedio ahorra hasta 10,000 hojas de papel al año mediante nuestra gestión digital de insumos y farmacia."
+    },
+    {
+      q: "¿Es compatible con cualquier centro de diálisis?",
+      a: "Sí, DialyStock V4.0 está diseñado modularmente para adaptarse a salas de Hemodiálisis, Diálisis Peritoneal y Farmacias Centrales, integrando todos los puntos de consumo en una sola plataforma."
+    },
+    {
+      q: "¿El personal médico necesita capacitación avanzada?",
+      a: "No. El sistema ha sido diseñado pensando en la agilidad de los enfermeros y auxiliares. La interfaz es intuitiva y permite realizar solicitudes de insumos o despachos en menos de 30 segundos."
+    },
+    {
+      q: "¿Qué nivel de seguridad ofrece para el control de stock?",
+      a: "Ofrecemos trazabilidad total mediante auditoría digital. Cada movimiento de inventario queda registrado con responsable, hora y fecha exacta, permitiendo auditorías precisas y sin errores manuales."
+    },
+    {
+      q: "¿Puedo personalizar mi logo y colores corporativos?",
+      a: "¡Absolutamente! A través de nuestro panel de Superadmin, puedes actualizar tu identidad visual, logo y enlaces de contacto para que la plataforma sea una extensión fiel de tu marca clínica."
+    }
   ])
   const router = useRouter()
 

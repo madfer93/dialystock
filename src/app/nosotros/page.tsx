@@ -8,10 +8,10 @@ import { supabase } from '@/lib/supabaseClient'
 
 export default function Nosotros() {
     const [nosotros, setNosotros] = useState({
-        mision: 'Nuestra misión es transformar la gestión operativa de las unidades renales a través de herramientas digitales de vanguardia. Buscamos eliminar el error humano, garantizar la trazabilidad total de los suministros críticos y permitir que el personal de salud se enfoque en lo que más importa: el cuidado del paciente.',
-        vision: 'Para el año 2028, DialyStock será el estándar de oro en la gestión de inventario médico digital para clínicas renales en toda Latinoamérica. Aspiramos a ser una plataforma integral de datos que prediga necesidades, optimice recursos y eleve la eficiencia hospitalaria a niveles de clase mundial.',
-        paper_savings: '25 → 0',
-        time_saved: '-70%'
+        mision: 'Nuestra misión es liderar la transformación digital en el sector de la salud renal, integrando tecnología de precisión y prácticas sostenibles. Eliminamos la burocracia operativa para que las clínicas puedan centrarse exclusivamente en la excelencia del cuidado al paciente, garantizando una trazabilidad absoluta de cada insumo médico.',
+        vision: 'DialyStock aspira a ser el estándar tecnológico global para la gestión de unidades renales en 2030. Nuestra meta es consolidar un ecosistema de salud inteligente que no solo optimice recursos, sino que también actúe como motor de cambio hacia una medicina 100% digital, transparente y respetuosa con el medio ambiente.',
+        paper_savings: '10,000 → 0',
+        time_saved: '+85%'
     })
 
     useEffect(() => {
@@ -43,9 +43,11 @@ export default function Nosotros() {
             </nav>
 
             <main className="relative z-10 max-w-4xl mx-auto py-20 px-6">
-                <div className="text-center mb-20">
+                <div className="text-center mb-20 animate-in fade-in slide-in-from-bottom-4 duration-1000">
                     <h1 className="text-5xl md:text-6xl font-black text-white mb-6">¿Quiénes Somos?</h1>
-                    <p className="text-xl text-slate-400">Innovación tecnológica dedicada a la salud renal.</p>
+                    <p className="text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed">
+                        Somos pioneros en la intersección de la salud renal y la eficiencia digital. DialyStock nace de la necesidad de modernizar las clínicas de diálisis, reemplazando procesos manuales obsoletos por una plataforma inteligente que habla el lenguaje de la medicina moderna y el respeto por el medio ambiente.
+                    </p>
                 </div>
 
                 <section className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-32">
