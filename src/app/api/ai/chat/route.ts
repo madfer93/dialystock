@@ -3,7 +3,12 @@ import { supabase } from '@/lib/supabaseClient'
 
 export async function POST(req: Request) {
     try {
-        const { messages } = await response_json(req)
+        const body = await req.json()
+        const { messages } = body
+
+        if (!messages || !Array.isArray(messages)) {
+            return NextResponse.json({ error: 'Mensajes no proporcionados' }, { status: 400 })
+        }
 
         // 1. Obtener configuraciones de Supabase
         const [aiConfig, socialConfig] = await Promise.all([
@@ -11,11 +16,19 @@ export async function POST(req: Request) {
             supabase.from('app_settings').select('data').eq('category', 'social').single()
         ])
 
+        // Debug: verificar si hay errores en las consultas
+        if (aiConfig.error) {
+            console.error('Error obteniendo ai_config:', aiConfig.error)
+            return NextResponse.json({ error: 'Error de configuración IA' }, { status: 500 })
+        }
+
         const config = aiConfig.data
         const social = socialConfig.data?.data || {}
 
-        if (!config || !config.data.keys || config.data.keys.length === 0) {
-            return NextResponse.json({ error: 'IA no configurada' }, { status: 500 })
+        // Verificar estructura de datos
+        if (!config?.data?.keys || config.data.keys.length === 0) {
+            console.error('Config estructura:', JSON.stringify(config))
+            return NextResponse.json({ error: 'IA no configurada - faltan API keys' }, { status: 500 })
         }
 
         // 2. Lógica de rotación de llaves
@@ -68,21 +81,24 @@ ${config.data.system_prompt || ''}
 
         const data = await response.json()
 
+        if (!response.ok) {
+            console.error('Groq API Error:', response.status, data)
+            return NextResponse.json({
+                error: data.error?.message || 'Error en servicio de IA'
+            }, { status: 500 })
+        }
+
         if (data.choices && data.choices[0]) {
             return NextResponse.json({ reply: data.choices[0].message.content })
         } else {
-            console.error('Error Groq Response:', data)
-            throw new Error('Respuesta de Groq inválida')
+            console.error('Groq Response inesperada:', data)
+            return NextResponse.json({ error: 'Respuesta de IA inválida' }, { status: 500 })
         }
 
     } catch (error) {
         console.error('Error AI Chat:', error)
-        return NextResponse.json({ error: 'Error procesando solicitud' }, { status: 500 })
+        return NextResponse.json({
+            error: error instanceof Error ? error.message : 'Error procesando solicitud'
+        }, { status: 500 })
     }
-}
-
-// Helper para parsear JSON de forma segura
-async function response_json(req: Request) {
-    const text = await req.text()
-    return JSON.parse(text)
 }

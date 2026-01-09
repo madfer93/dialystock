@@ -47,11 +47,19 @@ export default function FloatingSupport() {
                 body: JSON.stringify({ messages: [...messages, userMessage] })
             })
             const data = await response.json()
-            if (data.reply) {
+
+            if (data.error) {
+                console.error('API Error:', data.error)
+                setMessages(prev => [...prev, { role: 'assistant', content: `Error: ${data.error}. Por favor contacta por WhatsApp.` }])
+            } else if (data.reply) {
                 setMessages(prev => [...prev, { role: 'assistant', content: data.reply }])
+            } else {
+                console.error('Respuesta inesperada:', data)
+                setMessages(prev => [...prev, { role: 'assistant', content: 'No pude procesar tu mensaje. Intenta de nuevo o contacta por WhatsApp.' }])
             }
         } catch (error) {
-            setMessages(prev => [...prev, { role: 'assistant', content: 'Lo siento, hubo un error al conectar con mi cerebro artificial. Por favor intenta de nuevo.' }])
+            console.error('Fetch error:', error)
+            setMessages(prev => [...prev, { role: 'assistant', content: 'Lo siento, hubo un error de conexión. Por favor intenta de nuevo.' }])
         } finally {
             setLoading(false)
         }
