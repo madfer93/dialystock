@@ -12,14 +12,18 @@ import {
     Plus,
     Trash2,
     Leaf,
-    Info
+    Info,
+    Zap,
+    Bot,
+    Users
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
+import { cn } from '@/lib/utils'
 
 export default function ConfigPage() {
-    const [activeTab, setActiveTab] = useState<'faq' | 'social' | 'nosotros' | 'notif' | 'audit'>('faq')
+    const [activeTab, setActiveTab] = useState<'faq' | 'social' | 'nosotros' | 'monet' | 'audit'>('faq')
     const [loading, setLoading] = useState(false)
     const [message, setMessage] = useState('')
 
@@ -60,6 +64,14 @@ export default function ConfigPage() {
     // Audit Logs State
     const [logs, setLogs] = useState<any[]>([])
 
+    // Monetization & AI State
+    const [monet, setMonet] = useState({
+        wompi_pro: '',
+        wompi_ent: '',
+        groq_keys: '' // Separated by commas
+    })
+    const [leads, setLeads] = useState<any[]>([])
+
     useEffect(() => {
         fetchConfig()
         fetchLogs()
@@ -72,8 +84,21 @@ export default function ConfigPage() {
                 if (item.category === 'faq') setFaqs(item.data.items || [])
                 if (item.category === 'social') setSocial(item.data)
                 if (item.category === 'nosotros') setNosotros(item.data)
+                if (item.category === 'social') {
+                    setSocial(item.data)
+                    setMonet(prev => ({ ...prev, wompi_pro: item.data.wompi_pro || '', wompi_ent: item.data.wompi_ent || '' }))
+                }
+                if (item.category === 'ai_config') {
+                    setMonet(prev => ({ ...prev, groq_keys: item.data.keys?.join(', ') || '' }))
+                }
             })
         }
+        fetchLeads()
+    }
+
+    const fetchLeads = async () => {
+        const { data } = await supabase.from('app_leads').select('*').order('created_at', { ascending: false })
+        if (data) setLeads(data)
     }
 
     const fetchLogs = async () => {
@@ -104,6 +129,21 @@ export default function ConfigPage() {
             await supabase.from('app_settings').upsert({
                 category: 'nosotros',
                 data: nosotros
+            }, { onConflict: 'category' })
+
+            // Guardar Monetización (Links en Social y Keys en ai_config)
+            await supabase.from('app_settings').upsert({
+                category: 'social',
+                data: { ...social, wompi_pro: monet.wompi_pro, wompi_ent: monet.wompi_ent }
+            }, { onConflict: 'category' })
+
+            await supabase.from('app_settings').upsert({
+                category: 'ai_config',
+                data: {
+                    keys: monet.groq_keys.split(',').map(k => k.trim()).filter(k => k),
+                    model: 'llama-3.1-70b-versatile',
+                    system_prompt: 'Eres el asistente experto de DialyStock. Ayuda a clínicas renales a optimizar inventario y ahorrar papel.'
+                }
             }, { onConflict: 'category' })
 
             // Registrar Audit Log
@@ -157,6 +197,7 @@ export default function ConfigPage() {
                     { id: 'faq', label: 'FAQ', icon: HelpCircle },
                     { id: 'social', label: 'Contacto & Redes', icon: MessageCircle },
                     { id: 'nosotros', label: 'Institucional', icon: Leaf },
+                    { id: 'monet', label: 'IA & Monetización', icon: Zap },
                     { id: 'audit', label: 'Auditoría', icon: Globe }
                 ].map((tab) => (
                     <button
@@ -292,6 +333,95 @@ export default function ConfigPage() {
                                     <label className="text-[10px] font-black uppercase text-emerald-600 block px-1">Tiempo (%)</label>
                                     <Input value={nosotros.time_saved} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNosotros({ ...nosotros, time_saved: e.target.value })} className="w-32 bg-white font-black text-center text-emerald-700 h-12 rounded-xl" />
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {activeTab === 'monet' && (
+                    <div className="space-y-12">
+                        <div className="grid md:grid-cols-2 gap-12">
+                            <div className="space-y-8">
+                                <h4 className="text-sm font-black uppercase tracking-widest text-blue-600 flex items-center gap-2">
+                                    <Zap size={16} /> Pasarela Wompi
+                                </h4>
+                                <div className="space-y-4">
+                                    <label className="text-xs font-black text-slate-500">ID Link Plan Pro</label>
+                                    <Input
+                                        placeholder="os2Qr0"
+                                        value={monet.wompi_pro}
+                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMonet({ ...monet, wompi_pro: e.target.value })}
+                                        className="h-12 font-bold bg-slate-50"
+                                    />
+                                </div>
+                                <div className="space-y-4">
+                                    <label className="text-xs font-black text-slate-500">ID Link Plan Enterprise</label>
+                                    <Input
+                                        placeholder="Hwxym7"
+                                        value={monet.wompi_ent}
+                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMonet({ ...monet, wompi_ent: e.target.value })}
+                                        className="h-12 font-bold bg-slate-50"
+                                    />
+                                </div>
+                            </div>
+                            <div className="space-y-8">
+                                <h4 className="text-sm font-black uppercase tracking-widest text-purple-600 flex items-center gap-2">
+                                    <Bot size={16} /> Inteligencia Artificial (Groq)
+                                </h4>
+                                <div className="space-y-4">
+                                    <label className="text-xs font-black text-slate-500">Llaves de API (Separadas por coma)</label>
+                                    <Textarea
+                                        placeholder="gsk_..., gsk_..."
+                                        value={monet.groq_keys}
+                                        onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setMonet({ ...monet, groq_keys: e.target.value })}
+                                        className="min-h-[120px] font-mono text-xs bg-slate-50"
+                                    />
+                                    <p className="text-[10px] text-slate-400">El sistema rotará estas llaves para evitar límites de uso.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="space-y-6 pt-12 border-t border-slate-100">
+                            <h3 className="text-xl font-black text-slate-900 flex items-center gap-3">
+                                <Users className="text-blue-600" /> Leads y Prospectos
+                            </h3>
+                            <div className="overflow-hidden border border-slate-100 rounded-[2rem]">
+                                <table className="w-full text-left text-sm">
+                                    <thead className="bg-slate-50 border-b border-slate-100 font-black text-slate-900">
+                                        <tr>
+                                            <th className="px-6 py-4">Nombre</th>
+                                            <th className="px-6 py-4">Clínica</th>
+                                            <th className="px-6 py-4">Plan</th>
+                                            <th className="px-6 py-4">Fecha</th>
+                                            <th className="px-6 py-4 text-right">Contacto</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-50">
+                                        {leads.length === 0 && (
+                                            <tr>
+                                                <td colSpan={5} className="px-6 py-12 text-center text-slate-400 italic">Aún no hay leads registrados.</td>
+                                            </tr>
+                                        )}
+                                        {leads.map((lead) => (
+                                            <tr key={lead.id} className="hover:bg-slate-50/50 transition-colors capitalize">
+                                                <td className="px-6 py-4 font-bold text-slate-900">{lead.name}</td>
+                                                <td className="px-6 py-4 text-slate-600">{lead.clinic_name}</td>
+                                                <td className="px-6 py-4">
+                                                    <span className={cn(
+                                                        "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest",
+                                                        lead.plan_interested === 'starter' ? "bg-emerald-100 text-emerald-700" : "bg-blue-100 text-blue-700"
+                                                    )}>
+                                                        {lead.plan_interested}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4 text-slate-400">{new Date(lead.created_at).toLocaleDateString()}</td>
+                                                <td className="px-6 py-4 text-right">
+                                                    <a href={`mailto:${lead.email}`} className="text-blue-600 hover:underline font-bold text-xs">{lead.email}</a>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>

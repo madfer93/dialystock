@@ -23,11 +23,15 @@ import {
   Globe,
   HelpCircle,
   Plus,
-  Minus
+  Minus,
+  Rocket
 } from 'lucide-react'
-import { FaTiktok, FaFacebook, FaInstagram, FaGlobe } from 'react-icons/fa'
+import { FaTiktok, FaFacebook, FaInstagram, FaGlobe, FaWhatsapp } from 'react-icons/fa'
 import Link from 'next/link'
 import SharedFooter from '@/components/SharedFooter'
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { cn } from '@/lib/utils'
+import FloatingSupport from '@/components/FloatingSupport' // Already in layout, but sometimes needed for local context if logic shared
 
 export default function Home() {
   const [email, setEmail] = useState('')
@@ -57,6 +61,47 @@ export default function Home() {
       a: "¡Absolutamente! A través de nuestro panel de Superadmin, puedes actualizar tu identidad visual, logo y enlaces de contacto para que la plataforma sea una extensión fiel de tu marca clínica."
     }
   ])
+  const [showLeadModal, setShowLeadModal] = useState(false)
+  const [selectedPlan, setSelectedPlan] = useState<any>(null)
+  const [leadData, setLeadData] = useState({ name: '', email: '', clinic: '' })
+  const [wompiLinks, setWompiLinks] = useState({ pro: 'https://checkout.wompi.co/l/os2Qr0', ent: 'https://checkout.wompi.co/l/Hwxym7' })
+
+  const pricingPlans = [
+    {
+      id: 'starter',
+      name: 'Starter',
+      price: 'Gratis',
+      period: 'por 30 días',
+      desc: 'Ideal para probar la potencia de DialyStock en tu primera sede.',
+      features: ['1 Sede', 'Módulos HD/PD Básicos', 'Trazabilidad de Insumos', 'Soporte vía Ticket'],
+      color: 'from-slate-500 to-slate-700',
+      cta: 'Empezar Prueba',
+      link: '#'
+    },
+    {
+      id: 'pro',
+      name: 'Professional',
+      price: '$500.000',
+      period: 'COP / mes',
+      desc: 'Gestión profesional para clínicas en crecimiento.',
+      features: ['Hasta 5 Sedes', 'Auditoría Pro', 'Módulo Farmacia Premium', 'Soporte 24/7 WhatsApp'],
+      color: 'from-blue-600 to-indigo-700',
+      cta: 'Comprar Plan Pro',
+      link: wompiLinks.pro,
+      popular: true
+    },
+    {
+      id: 'enterprise',
+      name: 'Enterprise',
+      price: '$1.000.000+',
+      period: 'COP / mes',
+      desc: 'Para redes hospitalarias con requerimientos masivos.',
+      features: ['Sedes Ilimitadas', 'Analítica Avanzada con IA', 'Custom Roles', 'Gestor de cuenta dedicado'],
+      color: 'from-purple-600 to-indigo-900',
+      cta: 'Contactar Ventas',
+      link: wompiLinks.ent
+    }
+  ]
   const router = useRouter()
 
   useEffect(() => {
@@ -64,7 +109,21 @@ export default function Home() {
       const { data } = await supabase.from('app_settings').select('data').eq('category', 'faq').single()
       if (data && data.data.items) setFaqs(data.data.items)
     }
+    const fetchWompiLinks = async () => {
+      const { data } = await supabase.from('app_settings').select('data').eq('category', 'social').single()
+      if (data?.data) {
+        const formatWompiLink = (link: string) => {
+          if (!link) return null
+          return link.startsWith('http') ? link : `https://checkout.wompi.co/l/${link}`
+        }
+        setWompiLinks({
+          pro: formatWompiLink(data.data.wompi_pro) || wompiLinks.pro,
+          ent: formatWompiLink(data.data.wompi_ent) || wompiLinks.ent
+        })
+      }
+    }
     fetchFaqs()
+    fetchWompiLinks()
   }, [])
 
   useEffect(() => {
@@ -91,6 +150,37 @@ export default function Home() {
     }
     checkSession()
   }, [router])
+
+  const handleLeadCapture = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+
+    try {
+      // 1. Guardar el Lead en la base de datos
+      const { error } = await supabase.from('app_leads').insert({
+        name: leadData.name,
+        email: leadData.email,
+        clinic_name: leadData.clinic,
+        plan_interested: selectedPlan?.id
+      })
+
+      if (error) throw error
+
+      // 2. Redirigir al link de Wompi correspondiente si no es Starter
+      if (selectedPlan && selectedPlan.id !== 'starter') {
+        window.location.href = selectedPlan.link
+      } else {
+        setMessage('✅ ¡Solicitud de prueba enviada! Te contactaremos pronto.')
+        setShowLeadModal(false)
+        setLeadData({ name: '', email: '', clinic: '' })
+      }
+    } catch (error) {
+      console.error('Error Lead Capture:', error)
+      alert('Hubo un error al procesar tu solicitud. Inténtalo de nuevo.')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleMagicLink = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -310,7 +400,67 @@ export default function Home() {
           </div>
         </section>
 
-        {/* FAQ Section */}
+        {/* Pricing Section */}
+        <section id="planes" className="py-32 bg-slate-900/50">
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="text-center mb-20">
+              <h2 className="text-4xl font-black text-white mb-4">Planes de Inversión</h2>
+              <p className="text-slate-400 font-medium">Soluciones escalables para cada nivel de tu operación clínica.</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {pricingPlans.map((plan, idx) => (
+                <div
+                  key={idx}
+                  className={cn(
+                    "relative bg-slate-800/40 border rounded-[2.5rem] p-10 transition-all hover:-translate-y-2 flex flex-col h-full overflow-hidden",
+                    plan.popular ? "border-blue-500/50 shadow-2xl shadow-blue-500/10" : "border-white/5"
+                  )}
+                >
+                  {plan.popular && (
+                    <div className="absolute top-6 right-6 px-4 py-1.5 bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest rounded-full">
+                      Más Elegido
+                    </div>
+                  )}
+
+                  <div className="mb-8">
+                    <h3 className="text-2xl font-black text-white mb-2">{plan.name}</h3>
+                    <p className="text-sm text-slate-400 font-medium leading-relaxed">{plan.desc}</p>
+                  </div>
+
+                  <div className="mb-10 flex items-baseline gap-2">
+                    <span className="text-5xl font-black text-white">{plan.price}</span>
+                    <span className="text-slate-500 font-bold text-sm tracking-tighter uppercase">{plan.period}</span>
+                  </div>
+
+                  <div className="space-y-4 mb-12 flex-1">
+                    {plan.features.map((f, i) => (
+                      <div key={i} className="flex items-center gap-3">
+                        <CheckCircle2 size={18} className="text-blue-500 shrink-0" />
+                        <span className="text-sm text-slate-300 font-medium">{f}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      setSelectedPlan(plan);
+                      setShowLeadModal(true);
+                    }}
+                    className={cn(
+                      "w-full py-5 rounded-2xl font-black text-sm uppercase tracking-widest transition-all",
+                      plan.popular
+                        ? "bg-blue-600 text-white hover:bg-blue-500 shadow-xl shadow-blue-600/20"
+                        : "bg-white/5 text-white hover:bg-white/10 border border-white/10"
+                    )}
+                  >
+                    {plan.cta}
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
         <section className="py-32 bg-slate-900/50">
           <div className="max-w-3xl mx-auto px-6">
             <div className="text-center mb-16">
@@ -400,6 +550,92 @@ export default function Home() {
               className="mt-8 w-full text-slate-500 text-[10px] font-black hover:text-white transition-colors uppercase tracking-[0.3em]"
             >
               Cerrar y Regresar
+            </button>
+          </div>
+        </div>
+      )}
+      {/* Lead Capture Modal */}
+      {showLeadModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+          <div
+            className="absolute inset-0 bg-slate-950/80 backdrop-blur-md"
+            onClick={() => setShowLeadModal(false)}
+          ></div>
+          <div className="relative w-full max-w-lg bg-[#1e293b] border border-white/10 rounded-[2.5rem] shadow-2xl p-10 overflow-hidden animate-in zoom-in-95 duration-300">
+            <div className="text-center mb-8">
+              <div className={cn(
+                "w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-6 bg-gradient-to-br",
+                selectedPlan?.color || "from-blue-600 to-indigo-700"
+              )}>
+                <Rocket className="text-white" size={32} />
+              </div>
+              <h2 className="text-3xl font-black text-white mb-2">¡Excelente elección!</h2>
+              <p className="text-slate-400 text-sm">Estás a un paso de activar tu plan <strong>{selectedPlan?.name}</strong>. Déjanos tus datos para asegurar tu cuenta.</p>
+            </div>
+
+            <form onSubmit={handleLeadCapture} className="space-y-6">
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-300 ml-1 uppercase tracking-widest">Tu Nombre</label>
+                  <input
+                    type="text"
+                    required
+                    value={leadData.name}
+                    onChange={(e) => setLeadData({ ...leadData, name: e.target.value })}
+                    className="w-full bg-slate-900 border border-white/10 rounded-2xl px-6 py-4 text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium"
+                    placeholder="Manuel Madrid"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-300 ml-1 uppercase tracking-widest">Email Corporativo</label>
+                  <input
+                    type="email"
+                    required
+                    value={leadData.email}
+                    onChange={(e) => setLeadData({ ...leadData, email: e.target.value })}
+                    className="w-full bg-slate-900 border border-white/10 rounded-2xl px-6 py-4 text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium"
+                    placeholder="manuel@ejemplo.com"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-300 ml-1 uppercase tracking-widest">Nombre de la Clínica</label>
+                <input
+                  type="text"
+                  required
+                  value={leadData.clinic}
+                  onChange={(e) => setLeadData({ ...leadData, clinic: e.target.value })}
+                  className="w-full bg-slate-900 border border-white/10 rounded-2xl px-6 py-4 text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium"
+                  placeholder="Unidad Renal DialyStock"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className={cn(
+                  "w-full rounded-2xl py-4 font-black text-lg transition-all shadow-xl flex items-center justify-center gap-2",
+                  selectedPlan?.id === 'starter'
+                    ? "bg-emerald-600 hover:bg-emerald-500 shadow-emerald-600/20"
+                    : "bg-blue-600 hover:bg-blue-500 shadow-blue-600/20",
+                  "text-white disabled:opacity-50"
+                )}
+              >
+                {loading ? 'Procesando...' : (
+                  <>
+                    <span>{selectedPlan?.id === 'starter' ? 'Iniciar Prueba Gratuita' : 'Continuar al Pago'}</span>
+                    <ArrowRight size={20} />
+                  </>
+                )}
+              </button>
+            </form>
+
+            <button
+              onClick={() => setShowLeadModal(false)}
+              className="mt-8 w-full text-slate-500 text-[10px] font-black hover:text-white transition-colors uppercase tracking-[0.3em]"
+            >
+              Cancelar
             </button>
           </div>
         </div>
