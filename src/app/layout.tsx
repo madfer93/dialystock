@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import localFont from "next/font/local";
 import "./globals.css";
 import FloatingSupport from "@/components/FloatingSupport";
 
@@ -15,6 +14,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  verification: {
+    google: "R8F6UkNMybScXYaszR0NuWk1lbzGOo_vmIkOVuKzEa4",
+  },
   title: "DialyStock | Gestión Médica Inteligente & Eco-Eficiente",
   description: "Optimiza tu clínica de diálisis con tecnología sostenible. Reducimos el uso de papel y mejoramos la eficiencia operativa en hemodiálisis y diálisis peritoneal. Gestión de inventarios para una salud más verde.",
   keywords: ["gestión de inventarios médicos", "diálisis eco-eficiente", "ahorro de papel clínicas", "hemodiálisis", "diálisis peritoneal", "salud sostenible", "software médico Colombia", "automatización clínica"],
