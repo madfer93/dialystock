@@ -34,7 +34,10 @@ export async function POST(req: Request) {
         // 2. Lógica de rotación de llaves
         const keys = config.data.keys
         const randomKey = keys[Math.floor(Math.random() * keys.length)]
-        const model = config.data.model || 'llama-3.1-70b-versatile'
+        // Usar modelo actualizado (llama-3.1-70b fue descontinuado)
+        const model = config.data.model === 'llama-3.1-70b-versatile'
+            ? 'llama-3.3-70b-versatile'
+            : (config.data.model || 'llama-3.3-70b-versatile')
 
         // 3. Construir prompt con contexto completo del negocio
         const businessContext = `
