@@ -62,8 +62,12 @@ export default function SuperAdminLayout({
           <div className="flex h-20 items-center justify-between">
             {/* Logo Section */}
             <Link href="/superadmin" className="flex items-center gap-3 group">
-              <div className="bg-blue-600 p-2 rounded-xl shadow-lg shadow-blue-500/20 group-hover:scale-110 transition-transform">
-                <ShieldCheck className="text-white" size={24} />
+              <div className="group-hover:scale-110 transition-transform">
+                <img
+                  src="/logo-dialystock.png"
+                  alt="Logo"
+                  className="h-14 w-14 object-contain shadow-lg shadow-blue-500/10 rounded-xl"
+                />
               </div>
               <div className="flex flex-col">
                 <span className="font-bold text-xl tracking-tight leading-none text-white">DialyStock</span>

@@ -159,10 +159,12 @@ export default function Home() {
 
           {/* Header/Logo */}
           <div className="text-center mb-12 transform group-hover:scale-105 transition-transform duration-500">
-            <div className="inline-flex p-5 rounded-3xl bg-gradient-to-br from-blue-600 to-cyan-500 shadow-xl shadow-blue-500/20 mb-6">
-              <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="m12 14 4-4" /><path d="m3.34 19 8.66-8.66L20.66 19" /><path d="M9 9V3h6v6" /><path d="M12 12V8" />
-              </svg>
+            <div className="inline-flex mb-8">
+              <img
+                src="/logo-dialystock.png"
+                alt="DialyStock Logo"
+                className="w-48 h-48 object-contain drop-shadow-[0_0_15px_rgba(59,130,246,0.4)]"
+              />
             </div>
             <h1 className="text-4xl md:text-5xl font-extrabold text-white tracking-tight mb-3">
               Dialy<span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">Stock</span>
@@ -208,8 +210,8 @@ export default function Home() {
           {/* Messages */}
           {message && (
             <div className={`mt-8 p-4 rounded-2xl text-center font-medium animate-in fade-in slide-in-from-top-4 duration-300 ${message.includes('Error')
-                ? 'bg-red-500/10 border border-red-500/20 text-red-400'
-                : 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400'
+              ? 'bg-red-500/10 border border-red-500/20 text-red-400'
+              : 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400'
               }`}>
               {message}
             </div>

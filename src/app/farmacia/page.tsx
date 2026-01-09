@@ -789,16 +789,19 @@ export default function FarmaciaPage() {
                 </div>
             )}
 
-            <div className="footer-credits">
-                💻 <strong>Sistema desarrollado por Manuel Madrid</strong> |
-                DialyStock © 2025 |
-                <a
-                    href={`https://wa.me/573045788873?text=${encodeURIComponent('Hola Manuel, soy de la farmacia y necesito soporte con DialyStock.')}`}
-                    target="_blank"
-                    className="ml-2 text-emerald-400 font-bold hover:underline"
-                >
-                    Soporte WhatsApp: +57 304 578 8873
-                </a>
+            <div className="footer-credits flex items-center justify-center gap-4">
+                <img src="/logo-dialystock.png" alt="Logo" className="h-8 w-8 object-contain" />
+                <span>
+                    💻 <strong>Sistema desarrollado por Manuel Madrid</strong> |
+                    DialyStock © 2025 |
+                    <a
+                        href={`https://wa.me/573045788873?text=${encodeURIComponent('Hola Manuel, soy de la farmacia y necesito soporte con DialyStock.')}`}
+                        target="_blank"
+                        className="ml-2 text-emerald-400 font-bold hover:underline"
+                    >
+                        Soporte WhatsApp: +57 304 578 8873
+                    </a>
+                </span>
             </div>
         </div>
     )
