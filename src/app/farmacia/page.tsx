@@ -624,7 +624,7 @@ export default function FarmaciaPage() {
                         <button className="icon-btn" onClick={() => router.push('/')} title="Salir"><LucideLogOut /></button>
                         <button className="icon-btn" onClick={() => loadData(tenantId)} title="Actualizar"><LucideRefreshCw /></button>
                     </div>
-                    <h1>💊 Sistema Farmacia</h1>
+                    <h1>📦 DialyStock Farmacia</h1>
                     <p>Gestión y Despacho de Solicitudes</p>
                 </div>
 
@@ -743,7 +743,7 @@ export default function FarmaciaPage() {
                         <div className="print-logo">
                             <h1 className="text-3xl font-bold text-blue-600">DaVita</h1>
                         </div>
-                        <div className="print-title">Solicitud diaria y/o reposición de medicamentos - dispositivos y suministros por Hospitalarte</div>
+                        <div className="print-title">Solicitud diaria y/o reposición de productos médicos - DaVita PRO</div>
 
                         <div className="detalle-linea-unica">
                             <div><strong>ID:</strong> {modalDetalle.solicitud.id ? (modalDetalle.solicitud.tipo + '-' + modalDetalle.solicitud.id.replace(/-/g, '').slice(0, 10)) : modalDetalle.solicitud.id}</div>
@@ -789,7 +789,17 @@ export default function FarmaciaPage() {
                 </div>
             )}
 
-            <div className="footer-credits">💻 <strong>Sistema desarrollado por Manuel Fernando Madrid</strong> | DaVita Farmacia © 2025 Todos los derechos reservados | Sistema HD/PD V3.0</div>
+            <div className="footer-credits">
+                💻 <strong>Sistema desarrollado por Manuel Madrid</strong> |
+                DialyStock © 2025 |
+                <a
+                    href={`https://wa.me/573045788873?text=${encodeURIComponent('Hola Manuel, soy de la farmacia y necesito soporte con DialyStock.')}`}
+                    target="_blank"
+                    className="ml-2 text-emerald-400 font-bold hover:underline"
+                >
+                    Soporte WhatsApp: +57 304 578 8873
+                </a>
+            </div>
         </div>
     )
 }

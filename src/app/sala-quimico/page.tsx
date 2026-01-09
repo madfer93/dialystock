@@ -368,7 +368,7 @@ export default function SalaQuimicoPage() {
                         <button className="icon-btn" onClick={toggleDarkMode} title="Modo Oscuro/Claro">{darkMode ? <LucideSun /> : <LucideMoon />}</button>
                         <button className="icon-btn" onClick={() => router.push('/')} title="Salir"><LucideLogOut /></button>
                     </div>
-                    <h1>⚗️ Sistema Químico V2.1</h1>
+                    <h1>⚗️ DialyStock Químico V2.1</h1>
                     <p>Gestión de Solicitudes de Productos Químicos</p>
                 </div>
 
@@ -458,7 +458,16 @@ export default function SalaQuimicoPage() {
                 </div>
             </div>
 
-            <div className="footer-credits">💻 <strong>Sistema desarrollado por Manuel Fernando Madrid</strong> | DaVita Farmacia © 2025 Todos los derechos reservados | Sistema HD/PD V3.0</div>
+            <div className="footer-credits text-center py-6 border-t border-slate-100 opacity-80">
+                <p>💻 <strong>Desarrollado por Manuel Madrid</strong> | DialyStock © 2025 </p>
+                <a
+                    href={`https://wa.me/573045788873?text=${encodeURIComponent('Hola Manuel, soy de Sala Químico y necesito soporte con DialyStock.')}`}
+                    target="_blank"
+                    className="text-emerald-500 font-bold hover:underline text-sm"
+                >
+                    Soporte WhatsApp: +57 304 578 8873
+                </a>
+            </div>
         </div>
     )
 }

@@ -183,8 +183,8 @@ export default function JefeHDPage() {
                 {/* SIDEBAR */}
                 <aside className="sidebar">
                     <div className="p-6">
-                        <h1 className="text-xl font-bold text-white mb-2">Jefe HD</h1>
-                        <p className="text-white/60 text-sm">Supervisión Sala</p>
+                        <h1 className="text-xl font-bold text-white mb-2">DialyStock</h1>
+                        <p className="text-white/60 text-sm">Supervisión Sala HD</p>
                     </div>
                     <nav className="mt-4">
                         <button className={`sidebar-link ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('dashboard')}>
@@ -367,8 +367,15 @@ export default function JefeHDPage() {
 
 
                     {/* FOOTER GENERAL */}
-                    <div className="footer-credits" style={{ marginTop: 'auto' }}>
-                        💻 <strong>Sistema desarrollado por Manuel Fernando Madrid</strong> | DaVita Farmacia © 2025 Todos los derechos reservados | Sistema HD/PD V3.0
+                    <div className="footer-credits text-center py-6 border-t border-slate-100 opacity-80" style={{ marginTop: 'auto' }}>
+                        <p>💻 <strong>Desarrollado por Manuel Madrid</strong> | DialyStock © 2025 </p>
+                        <a
+                            href={`https://wa.me/573045788873?text=${encodeURIComponent('Hola Manuel, soy Jefe HD y necesito soporte con DialyStock.')}`}
+                            target="_blank"
+                            className="text-emerald-500 font-bold hover:underline text-sm"
+                        >
+                            Soporte WhatsApp: +57 304 578 8873
+                        </a>
                     </div>
                 </main >
             </div >

@@ -457,7 +457,7 @@ export default function AdminDashboard() {
                 <LogOut size={18} />
               </button>
             </div>
-            <h1>🏥 Administración Clínica</h1>
+            <h1>🏥 Administración DialyStock</h1>
             <p>Panel de Control Central - Gestión y Auditoría</p>
           </div>
 
@@ -1149,8 +1149,15 @@ export default function AdminDashboard() {
             }
 
             {/* FOOTER GENERAL */}
-            <div className="footer-credits">
-              💻 <strong>Sistema desarrollado por Manuel Fernando Madrid</strong> | DaVita Farmacia © 2025 Todos los derechos reservados | Sistema HD/PD V3.0
+            <div className="footer-credits text-center py-6 border-t border-slate-100 opacity-80">
+              <p>💻 <strong>Desarrollado por Manuel Madrid</strong> | DialyStock © 2025 </p>
+              <a
+                href={`https://wa.me/573045788873?text=${encodeURIComponent('Hola Manuel, soy el Administrador de Clínica y necesito soporte con DialyStock.')}`}
+                target="_blank"
+                className="text-emerald-500 font-bold hover:underline text-sm"
+              >
+                Soporte WhatsApp: +57 304 578 8873
+              </a>
             </div>
           </div >
         </div >

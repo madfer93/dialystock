@@ -12,6 +12,7 @@ import Link from 'next/link'
 export default function NuevaClinica() {
   const [nombre, setNombre] = useState('')
   const [descripcion, setDescripcion] = useState('')
+  const [logoUrl, setLogoUrl] = useState('')
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [success, setSuccess] = useState(false)
@@ -26,7 +27,7 @@ export default function NuevaClinica() {
     // Insertamos directamente en Supabase (Lógica descentralizada)
     const { data, error } = await supabase
       .from('clinicas')
-      .insert({ nombre, descripcion })
+      .insert({ nombre, descripcion, logo_url: logoUrl })
       .select()
 
     if (error) {
@@ -82,8 +83,20 @@ export default function NuevaClinica() {
                   value={descripcion}
                   onChange={(e) => setDescripcion(e.target.value)}
                   placeholder="Detalles adicionales, ubicación o contacto..."
-                  className="w-full min-h-[120px] rounded-2xl border-slate-200 focus:border-blue-500 focus:ring-blue-500/20 p-6 bg-slate-50/30 text-sm focus:outline-none focus:ring-2 transition-all"
+                  className="w-full min-h-[100px] rounded-2xl border-slate-200 focus:border-blue-500 focus:ring-blue-500/20 p-6 bg-slate-50/30 text-sm focus:outline-none focus:ring-2 transition-all"
                 />
+              </div>
+
+              <div className="space-y-3">
+                <Label htmlFor="logoUrl" className="text-sm font-bold text-slate-700 ml-1">URL del Logo (Opcional)</Label>
+                <Input
+                  id="logoUrl"
+                  value={logoUrl}
+                  onChange={(e) => setLogoUrl(e.target.value)}
+                  placeholder="https://ejemplo.com/logo.png"
+                  className="rounded-2xl border-slate-200 focus:border-blue-500 focus:ring-blue-500/20 py-6 px-6 bg-slate-50/30"
+                />
+                <p className="text-[10px] text-slate-400 ml-2 italic">Deja en blanco para usar el logo por defecto de DialyStock.</p>
               </div>
             </div>
 
@@ -116,8 +129,8 @@ export default function NuevaClinica() {
 
           {message && (
             <div className={`mt-8 p-6 rounded-2xl border flex items-center gap-4 animate-in zoom-in-95 duration-300 ${success
-                ? 'bg-emerald-50 border-emerald-100 text-emerald-800'
-                : 'bg-red-50 border-red-100 text-red-800'
+              ? 'bg-emerald-50 border-emerald-100 text-emerald-800'
+              : 'bg-red-50 border-red-100 text-red-800'
               }`}>
               {success ? <CheckCircle2 size={24} /> : <div className="text-2xl">⚠️</div>}
               <div>
