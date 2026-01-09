@@ -7,7 +7,6 @@ import {
   Droplet,
   FlaskConical,
   Package,
-  Stethoscope,
   ArrowRight,
   MessageCircle,
   CheckCircle2,
@@ -15,23 +14,20 @@ import {
   ShieldCheck,
   ChevronRight,
   Send,
-  Building2,
-  Users,
-  Facebook,
-  Instagram,
-  Mail,
-  Globe,
   HelpCircle,
   Plus,
   Minus,
-  Rocket
+  Rocket,
+  Star,
+  Quote,
+  MapPin,
+  Phone,
+  Clock
 } from 'lucide-react'
-import { FaTiktok, FaFacebook, FaInstagram, FaGlobe, FaWhatsapp } from 'react-icons/fa'
+import { FaWhatsapp, FaFacebook, FaInstagram, FaTiktok } from 'react-icons/fa'
 import Link from 'next/link'
 import SharedFooter from '@/components/SharedFooter'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { cn } from '@/lib/utils'
-import FloatingSupport from '@/components/FloatingSupport' // Already in layout, but sometimes needed for local context if logic shared
 
 export default function Home() {
   const [email, setEmail] = useState('')
@@ -246,18 +242,19 @@ export default function Home() {
       </div>
 
       {/* Navbar */}
-      <nav className="relative z-50 border-b border-white/5 bg-slate-900/50 backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <img src="/logo-dialystock.png" alt="Logo" className="h-10 w-10 object-contain" />
-            <span className="text-2xl font-black tracking-tighter text-white">Dialy<span className="text-blue-500">Stock</span></span>
+      <nav className="relative z-50 border-b border-white/5 bg-slate-900/50 backdrop-blur-xl sticky top-0">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 md:h-20 flex items-center justify-between">
+          <div className="flex items-center gap-2 md:gap-3">
+            <img src="/logo-dialystock.png" alt="Logo" className="h-8 w-8 md:h-10 md:w-10 object-contain" />
+            <span className="text-xl md:text-2xl font-black tracking-tighter text-white">Dialy<span className="text-blue-500">Stock</span></span>
           </div>
-          <div className="hidden md:flex items-center gap-8">
-            <a href="#modulos" className="text-sm font-semibold hover:text-blue-400 transition-colors">Módulos</a>
-            <a href="#beneficios" className="text-sm font-semibold hover:text-blue-400 transition-colors">Beneficios</a>
+          <div className="flex items-center gap-2 md:gap-8">
+            <a href="#modulos" className="hidden sm:block text-xs md:text-sm font-semibold hover:text-blue-400 transition-colors">Módulos</a>
+            <a href="#beneficios" className="hidden sm:block text-xs md:text-sm font-semibold hover:text-blue-400 transition-colors">Beneficios</a>
+            <a href="#contacto" className="hidden md:block text-xs md:text-sm font-semibold hover:text-blue-400 transition-colors">Contacto</a>
             <button
               onClick={() => setShowLogin(true)}
-              className="px-6 py-2.5 bg-blue-600 text-white rounded-full font-bold text-sm hover:bg-blue-500 transition-all shadow-lg shadow-blue-500/20"
+              className="px-4 md:px-6 py-2 md:py-2.5 bg-blue-600 text-white rounded-full font-bold text-xs md:text-sm hover:bg-blue-500 transition-all shadow-lg shadow-blue-500/20"
             >
               Iniciar Sesión
             </button>
@@ -267,34 +264,34 @@ export default function Home() {
 
       <main className="relative z-10">
         {/* Hero Section */}
-        <section className="pt-20 pb-32 px-6">
+        <section className="pt-12 md:pt-20 pb-16 md:pb-32 px-4 sm:px-6">
           <div className="max-w-7xl mx-auto text-center">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500/10 border border-blue-500/20 rounded-full text-blue-400 text-xs font-bold mb-8 animate-bounce">
-              <ShieldCheck size={14} />
-              NUEVA VERSIÓN 3.5 DISPONIBLE
+            <div className="inline-flex items-center gap-2 px-3 md:px-4 py-1.5 md:py-2 bg-blue-500/10 border border-blue-500/20 rounded-full text-blue-400 text-[10px] md:text-xs font-bold mb-6 md:mb-8 animate-bounce">
+              <ShieldCheck size={12} className="md:w-[14px] md:h-[14px]" />
+              NUEVA VERSIÓN 4.0 DISPONIBLE
             </div>
-            <h1 className="text-6xl md:text-8xl font-black text-white tracking-tight mb-8 leading-[0.9]">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-8xl font-black text-white tracking-tight mb-6 md:mb-8 leading-[0.95]">
               Gestión Médica <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-blue-600 to-indigo-600">Sin Errores.</span>
             </h1>
-            <p className="max-w-2xl mx-auto text-xl text-slate-400 mb-12 leading-relaxed">
+            <p className="max-w-2xl mx-auto text-base md:text-xl text-slate-400 mb-8 md:mb-12 leading-relaxed px-4">
               DialyStock es la plataforma líder para el control de inventarios en unidades renales.
               Optimiza tus procesos de hemodiálisis y diálisis peritoneal con trazabilidad total.
             </p>
-            <div className="flex flex-col md:flex-row items-center justify-center gap-4">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 md:gap-4 px-4">
               <button
                 onClick={() => setShowLogin(true)}
-                className="group w-full md:w-auto px-10 py-5 bg-white text-slate-900 rounded-2xl font-black text-lg hover:bg-blue-50 transition-all flex items-center justify-center gap-3 shadow-2xl"
+                className="group w-full sm:w-auto px-6 md:px-10 py-4 md:py-5 bg-white text-slate-900 rounded-xl md:rounded-2xl font-black text-base md:text-lg hover:bg-blue-50 transition-all flex items-center justify-center gap-2 md:gap-3 shadow-2xl"
               >
                 Empezar Ahora
-                <ArrowRight className="group-hover:translate-x-1 transition-transform" />
+                <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
               </button>
               <a
                 href={`https://wa.me/573045788873?text=${encodeURIComponent('Hola Manuel, me interesa una demostración de DialyStock.')}`}
                 target="_blank"
-                className="w-full md:w-auto px-10 py-5 bg-slate-800 text-white rounded-2xl font-bold text-lg hover:bg-slate-700 transition-all border border-white/10 flex items-center justify-center gap-3"
+                className="w-full sm:w-auto px-6 md:px-10 py-4 md:py-5 bg-slate-800 text-white rounded-xl md:rounded-2xl font-bold text-base md:text-lg hover:bg-slate-700 transition-all border border-white/10 flex items-center justify-center gap-2 md:gap-3"
               >
-                <MessageCircle />
+                <MessageCircle size={18} />
                 Agendar Demo
               </a>
             </div>
@@ -302,33 +299,33 @@ export default function Home() {
         </section>
 
         {/* Modules Section */}
-        <section id="modulos" className="py-32 bg-slate-900/30">
-          <div className="max-w-7xl mx-auto px-6">
-            <div className="text-center mb-20">
-              <h2 className="text-4xl font-black text-white mb-4">Ecosistema Integral</h2>
-              <p className="text-slate-400 font-medium">Módulos especializados para cada área de tu clínica renal.</p>
+        <section id="modulos" className="py-16 md:py-32 bg-slate-900/30">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6">
+            <div className="text-center mb-12 md:mb-20">
+              <h2 className="text-3xl md:text-4xl font-black text-white mb-3 md:mb-4">Ecosistema Integral</h2>
+              <p className="text-slate-400 font-medium text-sm md:text-base">Módulos especializados para cada área de tu clínica renal.</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8">
               {modules.map((m: any, idx) => (
                 <Link
                   key={idx}
                   href={m.link}
-                  className="group relative bg-slate-800/50 border border-white/10 rounded-[2rem] p-8 hover:bg-slate-800 transition-all hover:-translate-y-2 cursor-pointer overflow-hidden border-b-4 border-b-transparent hover:border-b-blue-500 shadow-xl"
+                  className="group relative bg-slate-800/50 border border-white/10 rounded-2xl md:rounded-[2rem] p-6 md:p-8 hover:bg-slate-800 transition-all hover:-translate-y-2 cursor-pointer overflow-hidden border-b-4 border-b-transparent hover:border-b-blue-500 shadow-xl"
                 >
                   <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${m.color} opacity-0 group-hover:opacity-10 blur-3xl transition-opacity`}></div>
-                  <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${m.color} flex items-center justify-center mb-6 shadow-lg shadow-black/20 group-hover:scale-110 transition-transform`}>
-                    <m.icon className="text-white" size={28} />
+                  <div className={`w-12 h-12 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-gradient-to-br ${m.color} flex items-center justify-center mb-4 md:mb-6 shadow-lg shadow-black/20 group-hover:scale-110 transition-transform`}>
+                    <m.icon className="text-white" size={24} />
                   </div>
-                  <div className="inline-block px-3 py-1 bg-white/5 rounded-full text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">
+                  <div className="inline-block px-2 md:px-3 py-1 bg-white/5 rounded-full text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 md:mb-4">
                     {m.badge}
                   </div>
-                  <h3 className="text-xl font-bold text-white mb-3">{m.title}</h3>
-                  <p className="text-sm text-slate-400 leading-relaxed mb-6">
+                  <h3 className="text-lg md:text-xl font-bold text-white mb-2 md:mb-3">{m.title}</h3>
+                  <p className="text-xs md:text-sm text-slate-400 leading-relaxed mb-4 md:mb-6">
                     {m.desc}
                   </p>
-                  <div className="flex items-center gap-2 text-blue-400 text-[10px] font-black uppercase tracking-widest group-hover:gap-3 transition-all">
-                    Simular Proceso <ChevronRight size={14} />
+                  <div className="flex items-center gap-2 text-blue-400 text-[9px] md:text-[10px] font-black uppercase tracking-widest group-hover:gap-3 transition-all">
+                    Simular Proceso <ChevronRight size={12} className="md:w-[14px] md:h-[14px]" />
                   </div>
                 </Link>
               ))}
@@ -337,13 +334,13 @@ export default function Home() {
         </section>
 
         {/* Benefits Section */}
-        <section id="beneficios" className="py-32">
-          <div className="max-w-7xl mx-auto px-6">
-            <div className="bg-gradient-to-br from-blue-600 to-indigo-800 rounded-[3rem] p-12 md:p-24 overflow-hidden relative">
+        <section id="beneficios" className="py-16 md:py-32">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6">
+            <div className="bg-gradient-to-br from-blue-600 to-indigo-800 rounded-2xl md:rounded-[3rem] p-6 sm:p-10 md:p-16 lg:p-24 overflow-hidden relative">
               <div className="absolute top-0 right-0 w-[40%] h-full bg-black/10 backdrop-blur-2xl skew-x-12 translate-x-1/2"></div>
-              <div className="relative z-10 grid md:grid-cols-2 gap-16 items-center">
+              <div className="relative z-10 grid md:grid-cols-2 gap-8 md:gap-16 items-center">
                 <div>
-                  <h2 className="text-4xl md:text-5xl font-black text-white mb-8 leading-tight">
+                  <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-white mb-6 md:mb-8 leading-tight">
                     ¿Por qué elegir DialyStock para tu clínica?
                   </h2>
                   <div className="space-y-6">
@@ -401,43 +398,43 @@ export default function Home() {
         </section>
 
         {/* Pricing Section */}
-        <section id="planes" className="py-32 bg-slate-900/50">
-          <div className="max-w-7xl mx-auto px-6">
-            <div className="text-center mb-20">
-              <h2 className="text-4xl font-black text-white mb-4">Planes de Inversión</h2>
-              <p className="text-slate-400 font-medium">Soluciones escalables para cada nivel de tu operación clínica.</p>
+        <section id="planes" className="py-16 md:py-32 bg-slate-900/50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6">
+            <div className="text-center mb-12 md:mb-20">
+              <h2 className="text-3xl md:text-4xl font-black text-white mb-3 md:mb-4">Planes de Inversión</h2>
+              <p className="text-slate-400 font-medium text-sm md:text-base">Soluciones escalables para cada nivel de tu operación clínica.</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-8">
               {pricingPlans.map((plan, idx) => (
                 <div
                   key={idx}
                   className={cn(
-                    "relative bg-slate-800/40 border rounded-[2.5rem] p-10 transition-all hover:-translate-y-2 flex flex-col h-full overflow-hidden",
+                    "relative bg-slate-800/40 border rounded-2xl md:rounded-[2.5rem] p-6 md:p-10 transition-all hover:-translate-y-2 flex flex-col h-full overflow-hidden",
                     plan.popular ? "border-blue-500/50 shadow-2xl shadow-blue-500/10" : "border-white/5"
                   )}
                 >
                   {plan.popular && (
-                    <div className="absolute top-6 right-6 px-4 py-1.5 bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest rounded-full">
+                    <div className="absolute top-4 right-4 md:top-6 md:right-6 px-3 md:px-4 py-1 md:py-1.5 bg-blue-600 text-white text-[9px] md:text-[10px] font-black uppercase tracking-widest rounded-full">
                       Más Elegido
                     </div>
                   )}
 
-                  <div className="mb-8">
-                    <h3 className="text-2xl font-black text-white mb-2">{plan.name}</h3>
-                    <p className="text-sm text-slate-400 font-medium leading-relaxed">{plan.desc}</p>
+                  <div className="mb-6 md:mb-8">
+                    <h3 className="text-xl md:text-2xl font-black text-white mb-2">{plan.name}</h3>
+                    <p className="text-xs md:text-sm text-slate-400 font-medium leading-relaxed">{plan.desc}</p>
                   </div>
 
-                  <div className="mb-10 flex items-baseline gap-2">
-                    <span className="text-5xl font-black text-white">{plan.price}</span>
-                    <span className="text-slate-500 font-bold text-sm tracking-tighter uppercase">{plan.period}</span>
+                  <div className="mb-6 md:mb-10 flex items-baseline gap-2">
+                    <span className="text-3xl md:text-5xl font-black text-white">{plan.price}</span>
+                    <span className="text-slate-500 font-bold text-xs md:text-sm tracking-tighter uppercase">{plan.period}</span>
                   </div>
 
-                  <div className="space-y-4 mb-12 flex-1">
+                  <div className="space-y-3 md:space-y-4 mb-8 md:mb-12 flex-1">
                     {plan.features.map((f, i) => (
-                      <div key={i} className="flex items-center gap-3">
-                        <CheckCircle2 size={18} className="text-blue-500 shrink-0" />
-                        <span className="text-sm text-slate-300 font-medium">{f}</span>
+                      <div key={i} className="flex items-center gap-2 md:gap-3">
+                        <CheckCircle2 size={16} className="text-blue-500 shrink-0" />
+                        <span className="text-xs md:text-sm text-slate-300 font-medium">{f}</span>
                       </div>
                     ))}
                   </div>
@@ -448,7 +445,7 @@ export default function Home() {
                       setShowLeadModal(true);
                     }}
                     className={cn(
-                      "w-full py-5 rounded-2xl font-black text-sm uppercase tracking-widest transition-all",
+                      "w-full py-4 md:py-5 rounded-xl md:rounded-2xl font-black text-xs md:text-sm uppercase tracking-widest transition-all",
                       plan.popular
                         ? "bg-blue-600 text-white hover:bg-blue-500 shadow-xl shadow-blue-600/20"
                         : "bg-white/5 text-white hover:bg-white/10 border border-white/10"
@@ -461,13 +458,217 @@ export default function Home() {
             </div>
           </div>
         </section>
-        <section className="py-32 bg-slate-900/50">
-          <div className="max-w-3xl mx-auto px-6">
-            <div className="text-center mb-16">
+
+        {/* Testimonials Section */}
+        <section id="testimonios" className="py-20 md:py-32">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6">
+            <div className="text-center mb-12 md:mb-20">
+              <div className="inline-flex p-3 rounded-2xl bg-yellow-500/10 text-yellow-400 mb-4">
+                <Star size={24} />
+              </div>
+              <h2 className="text-3xl md:text-4xl font-black text-white mb-4">Lo que dicen nuestros clientes</h2>
+              <p className="text-slate-400 font-medium max-w-2xl mx-auto">Clínicas de toda la región confían en DialyStock para optimizar sus operaciones.</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+              {[
+                {
+                  name: 'Dra. María González',
+                  role: 'Directora Médica',
+                  clinic: 'Unidad Renal del Caribe',
+                  text: 'DialyStock transformó nuestra gestión de inventarios. Ahorramos más de 8 horas semanales en papeleo y tenemos trazabilidad total de cada insumo.',
+                  rating: 5
+                },
+                {
+                  name: 'Carlos Martínez',
+                  role: 'Jefe de Farmacia',
+                  clinic: 'Clínica Renal Medellín',
+                  text: 'La integración con nuestros proveedores es increíble. Los pedidos que antes tomaban días ahora se procesan en minutos.',
+                  rating: 5
+                },
+                {
+                  name: 'Enf. Laura Pérez',
+                  role: 'Coordinadora HD',
+                  clinic: 'Centro Diálisis Bogotá',
+                  text: 'El personal de enfermería adoptó el sistema en menos de una semana. La interfaz es tan intuitiva que no necesitamos capacitación extensa.',
+                  rating: 5
+                }
+              ].map((testimonial, idx) => (
+                <div
+                  key={idx}
+                  className="bg-slate-800/50 border border-white/10 rounded-2xl md:rounded-3xl p-6 md:p-8 hover:bg-slate-800/70 transition-all group"
+                >
+                  <div className="flex items-center gap-1 mb-4">
+                    {[...Array(testimonial.rating)].map((_, i) => (
+                      <Star key={i} size={16} className="fill-yellow-400 text-yellow-400" />
+                    ))}
+                  </div>
+                  <div className="relative mb-6">
+                    <Quote size={32} className="absolute -top-2 -left-2 text-blue-500/20" />
+                    <p className="text-slate-300 text-sm md:text-base leading-relaxed pl-6">{testimonial.text}</p>
+                  </div>
+                  <div className="flex items-center gap-4 pt-4 border-t border-white/5">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg">
+                      {testimonial.name.charAt(0)}
+                    </div>
+                    <div>
+                      <p className="font-bold text-white text-sm">{testimonial.name}</p>
+                      <p className="text-xs text-slate-400">{testimonial.role}</p>
+                      <p className="text-xs text-blue-400">{testimonial.clinic}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Contact Section */}
+        <section id="contacto" className="py-20 md:py-32 bg-slate-900/50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-16">
+              {/* Contact Info */}
+              <div>
+                <h2 className="text-3xl md:text-4xl font-black text-white mb-4">¿Listo para transformar tu clínica?</h2>
+                <p className="text-slate-400 mb-8 text-sm md:text-base">Contáctanos y un especialista te ayudará a encontrar el plan perfecto para tu operación.</p>
+
+                <div className="space-y-6">
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center shrink-0">
+                      <FaWhatsapp className="text-emerald-400" size={24} />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-white mb-1">WhatsApp</h4>
+                      <p className="text-slate-400 text-sm">+57 304 578 8873</p>
+                      <a
+                        href="https://wa.me/573045788873?text=Hola,%20quiero%20información%20sobre%20DialyStock"
+                        target="_blank"
+                        className="text-emerald-400 text-xs font-bold hover:underline"
+                      >
+                        Enviar mensaje →
+                      </a>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center shrink-0">
+                      <Send className="text-blue-400" size={24} />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-white mb-1">Email</h4>
+                      <p className="text-slate-400 text-sm">soporte@dialystock.com</p>
+                      <a href="mailto:soporte@dialystock.com" className="text-blue-400 text-xs font-bold hover:underline">
+                        Enviar correo →
+                      </a>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-purple-500/10 flex items-center justify-center shrink-0">
+                      <Clock className="text-purple-400" size={24} />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-white mb-1">Horario de Atención</h4>
+                      <p className="text-slate-400 text-sm">Lun - Vie: 8:00 AM - 6:00 PM</p>
+                      <p className="text-slate-400 text-sm">Soporte 24/7 para clientes Pro</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Social Links */}
+                <div className="mt-8 pt-8 border-t border-white/10">
+                  <p className="text-sm text-slate-400 mb-4">Síguenos en redes sociales</p>
+                  <div className="flex gap-4">
+                    <a href="https://www.facebook.com/profile.php?id=61583530845268" target="_blank" className="w-10 h-10 rounded-xl bg-white/5 hover:bg-blue-600/20 flex items-center justify-center text-slate-400 hover:text-blue-400 transition-all">
+                      <FaFacebook size={20} />
+                    </a>
+                    <a href="https://www.instagram.com/dosis_de_conocimiento/" target="_blank" className="w-10 h-10 rounded-xl bg-white/5 hover:bg-pink-600/20 flex items-center justify-center text-slate-400 hover:text-pink-400 transition-all">
+                      <FaInstagram size={20} />
+                    </a>
+                    <a href="https://www.tiktok.com/@dosis_de_conocimiento" target="_blank" className="w-10 h-10 rounded-xl bg-white/5 hover:bg-slate-600/20 flex items-center justify-center text-slate-400 hover:text-white transition-all">
+                      <FaTiktok size={20} />
+                    </a>
+                  </div>
+                </div>
+              </div>
+
+              {/* Contact Form */}
+              <div className="bg-slate-800/50 border border-white/10 rounded-2xl md:rounded-3xl p-6 md:p-10">
+                <h3 className="text-xl md:text-2xl font-black text-white mb-6">Solicita una demostración</h3>
+                <form className="space-y-4 md:space-y-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs font-bold text-slate-300 mb-2 block">Nombre completo</label>
+                      <input
+                        type="text"
+                        className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Dr. Juan Pérez"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-slate-300 mb-2 block">Teléfono</label>
+                      <input
+                        type="tel"
+                        className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="+57 300 123 4567"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-slate-300 mb-2 block">Email corporativo</label>
+                    <input
+                      type="email"
+                      className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="correo@clinica.com"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-slate-300 mb-2 block">Nombre de la clínica</label>
+                    <input
+                      type="text"
+                      className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Unidad Renal XYZ"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-slate-300 mb-2 block">¿Cuántas sedes tienen?</label>
+                    <select className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                      <option value="1">1 sede</option>
+                      <option value="2-5">2-5 sedes</option>
+                      <option value="6-10">6-10 sedes</option>
+                      <option value="10+">Más de 10 sedes</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-slate-300 mb-2 block">Mensaje (opcional)</label>
+                    <textarea
+                      rows={3}
+                      className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                      placeholder="Cuéntanos sobre tus necesidades..."
+                    ></textarea>
+                  </div>
+                  <button
+                    type="submit"
+                    className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl transition-all flex items-center justify-center gap-2 shadow-xl shadow-blue-600/20"
+                  >
+                    Solicitar Demo Gratis
+                    <ArrowRight size={18} />
+                  </button>
+                  <p className="text-xs text-slate-500 text-center">Te contactaremos en menos de 24 horas</p>
+                </form>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* FAQ Section */}
+        <section className="py-20 md:py-32 bg-slate-900/50">
+          <div className="max-w-3xl mx-auto px-4 sm:px-6">
+            <div className="text-center mb-12 md:mb-16">
               <div className="inline-flex p-3 rounded-2xl bg-blue-500/10 text-blue-400 mb-4">
                 <HelpCircle size={24} />
               </div>
-              <h2 className="text-4xl font-black text-white mb-4">Preguntas Frecuentes</h2>
+              <h2 className="text-3xl md:text-4xl font-black text-white mb-4">Preguntas Frecuentes</h2>
               <p className="text-slate-400">Todo lo que necesitas saber sobre la plataforma.</p>
             </div>
 

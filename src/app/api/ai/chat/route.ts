@@ -10,6 +10,9 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Mensajes no proporcionados' }, { status: 400 })
         }
 
+        // Limitar historial a últimos 10 mensajes para ahorrar tokens
+        const limitedMessages = messages.slice(-10)
+
         // 1. Obtener configuraciones de Supabase
         const [aiConfig, socialConfig] = await Promise.all([
             supabase.from('app_settings').select('data').eq('category', 'ai_config').single(),
@@ -75,7 +78,7 @@ ${config.data.system_prompt || ''}
                 model: model,
                 messages: [
                     { role: 'system', content: businessContext },
-                    ...messages
+                    ...limitedMessages
                 ],
                 temperature: 0.7,
                 max_tokens: 500
