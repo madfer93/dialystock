@@ -37,8 +37,8 @@ export default function SuperAdminHome() {
       const [usersCount, prodsCount, solsCount, recentSols, allUsers] = await Promise.all([
         supabase.from('profiles').select('*', { count: 'exact', head: true }),
         supabase.from('productos').select('*', { count: 'exact', head: true }),
-        supabase.from('solicitudes').select('*, clinicas(nombre)'), // Traemos todos para métricas
-        supabase.from('solicitudes').select('*, clinicas(nombre)').order('created_at', { ascending: false }).limit(5),
+        supabase.from('solicitudes').select('*, clinicas:tenant_id(nombre)'), // Traemos todos para métricas
+        supabase.from('solicitudes').select('*, clinicas:tenant_id(nombre)').order('created_at', { ascending: false }).limit(5),
         supabase.from('profiles').select('*, clinicas:tenant_id(nombre)').order('created_at', { ascending: false }).limit(10)
       ])
 
@@ -84,7 +84,7 @@ export default function SuperAdminHome() {
 
   useEffect(() => {
     const fetchFilteredActivity = async () => {
-      let query = supabase.from('solicitudes').select('*, clinicas(nombre)').order('created_at', { ascending: false }).limit(5)
+      let query = supabase.from('solicitudes').select('*, clinicas:tenant_id(nombre)').order('created_at', { ascending: false }).limit(5)
       if (filterClinica !== 'all') {
         query = query.eq('tenant_id', filterClinica)
       }

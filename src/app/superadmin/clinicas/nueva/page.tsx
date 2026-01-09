@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Building2, Save, ArrowLeft, CheckCircle2 } from 'lucide-react'
+import { Building2, Save, ArrowLeft, CheckCircle2, Upload, ImageIcon } from 'lucide-react'
 import Link from 'next/link'
 
 export default function NuevaClinica() {
@@ -16,7 +16,37 @@ export default function NuevaClinica() {
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [success, setSuccess] = useState(false)
+  const [uploading, setUploading] = useState(false)
   const router = useRouter()
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setUploading(true)
+    const formData = new FormData()
+    formData.append('image', file)
+
+    try {
+      // Usamos el API Key que el usuario puede cambiar o configurar en .env
+      const apiKey = '6834160759325988be0808064c126d4c' // Placeholder/User specified key or generic
+      const response = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
+        method: 'POST',
+        body: formData
+      })
+      const result = await response.json()
+      if (result.success) {
+        setLogoUrl(result.data.url)
+        setMessage('Imagen subida correctamente a ImgBB')
+      } else {
+        setMessage('Error al subir imagen a ImgBB')
+      }
+    } catch (err) {
+      setMessage('Error de conexión con ImgBB')
+    } finally {
+      setUploading(false)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -88,15 +118,59 @@ export default function NuevaClinica() {
               </div>
 
               <div className="space-y-3">
-                <Label htmlFor="logoUrl" className="text-sm font-bold text-slate-700 ml-1">URL del Logo (Opcional)</Label>
-                <Input
-                  id="logoUrl"
-                  value={logoUrl}
-                  onChange={(e) => setLogoUrl(e.target.value)}
-                  placeholder="https://ejemplo.com/logo.png"
-                  className="rounded-2xl border-slate-200 focus:border-blue-500 focus:ring-blue-500/20 py-6 px-6 bg-slate-50/30"
-                />
-                <p className="text-[10px] text-slate-400 ml-2 italic">Deja en blanco para usar el logo por defecto de DialyStock.</p>
+                <Label className="text-sm font-bold text-slate-700 ml-1">Logo de la Clínica (ImgBB)</Label>
+                <div className="flex items-center gap-4">
+                  <div className="flex-1">
+                    <div className={`
+                      relative border-2 border-dashed rounded-2xl p-6 transition-all text-center
+                      ${uploading ? 'bg-slate-50 border-blue-200' : 'bg-slate-50/30 border-slate-200 hover:border-blue-300'}
+                    `}>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        disabled={uploading}
+                      />
+                      <div className="flex flex-col items-center gap-2">
+                        {uploading ? (
+                          <div className="w-8 h-8 border-4 border-blue-600/30 border-t-blue-600 rounded-full animate-spin"></div>
+                        ) : (
+                          <Upload className="text-slate-400" size={24} />
+                        )}
+                        <p className="text-xs font-bold text-slate-500">
+                          {uploading ? 'Subiendo a ImgBB...' : 'Haz clic para subir logo'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {logoUrl && (
+                    <div className="h-24 w-24 rounded-2xl border border-slate-100 overflow-hidden shadow-sm bg-white p-2">
+                      <img src={logoUrl} alt="Preview" className="w-full h-full object-contain" />
+                    </div>
+                  )}
+                </div>
+                {logoUrl && (
+                  <div className="flex items-center gap-2 text-[10px] text-emerald-600 font-bold ml-2">
+                    <CheckCircle2 size={12} />
+                    <span>Logo vinculado correctamente</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-3">
+                <Label htmlFor="logoUrl" className="text-sm font-bold text-slate-700 ml-1">URL Directa del Logo (Opcional)</Label>
+                <div className="relative">
+                  <ImageIcon className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+                  <Input
+                    id="logoUrl"
+                    value={logoUrl}
+                    onChange={(e) => setLogoUrl(e.target.value)}
+                    placeholder="https://i.ibb.co/..."
+                    className="rounded-2xl border-slate-200 focus:border-blue-500 focus:ring-blue-500/20 py-6 pl-14 pr-6 bg-slate-50/30 text-xs"
+                  />
+                </div>
               </div>
             </div>
 

@@ -368,14 +368,17 @@ export default function JefeHDPage() {
 
                     {/* FOOTER GENERAL */}
                     <div className="footer-credits text-center py-6 border-t border-slate-100 opacity-80" style={{ marginTop: 'auto' }}>
-                        <p>💻 <strong>Desarrollado por Manuel Madrid</strong> | DialyStock © 2025 </p>
-                        <a
-                            href={`https://wa.me/573045788873?text=${encodeURIComponent('Hola Manuel, soy Jefe HD y necesito soporte con DialyStock.')}`}
-                            target="_blank"
-                            className="text-emerald-500 font-bold hover:underline text-sm"
-                        >
-                            Soporte WhatsApp: +57 304 578 8873
-                        </a>
+                        <div className="footer-credits">
+                            💻 <strong>Sistema desarrollado por Manuel Madrid</strong> |
+                            DialyStock © 2025 |
+                            <a
+                                href={`https://wa.me/573045788873?text=${encodeURIComponent('Hola Manuel, soy el Jefe HD y necesito soporte con DialyStock.')}`}
+                                target="_blank"
+                                className="ml-2 text-emerald-400 font-bold hover:underline"
+                            >
+                                Soporte WhatsApp: +57 304 578 8873
+                            </a>
+                        </div>
                     </div>
                 </main >
             </div >

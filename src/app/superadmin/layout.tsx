@@ -55,88 +55,108 @@ export default function SuperAdminLayout({
   )
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] flex flex-col md:flex-row">
-      {/* Mobile Header */}
-      <div className="md:hidden bg-[#0f172a] text-white p-4 flex justify-between items-center shadow-lg">
-        <div className="flex items-center gap-2">
-          <ShieldCheck className="text-blue-400" size={24} />
-          <span className="font-bold text-xl tracking-tight">DialyStock <span className="text-blue-400 text-xs">PRO</span></span>
-        </div>
-        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
-          {isMobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
-        </button>
-      </div>
+    <div className="min-h-screen bg-[#f8fafc]">
+      {/* Top Navigation Bar */}
+      <nav className="sticky top-0 z-50 bg-[#0f172a] text-white shadow-xl">
+        <div className="max-w-7xl mx-auto px-4 md:px-8">
+          <div className="flex h-20 items-center justify-between">
+            {/* Logo Section */}
+            <Link href="/superadmin" className="flex items-center gap-3 group">
+              <div className="bg-blue-600 p-2 rounded-xl shadow-lg shadow-blue-500/20 group-hover:scale-110 transition-transform">
+                <ShieldCheck className="text-white" size={24} />
+              </div>
+              <div className="flex flex-col">
+                <span className="font-bold text-xl tracking-tight leading-none text-white">DialyStock</span>
+                <span className="text-[10px] text-blue-400 font-bold tracking-widest uppercase mt-0.5">Global Admin</span>
+              </div>
+            </Link>
 
-      {/* Sidebar */}
-      <aside className={`
-        fixed inset-y-0 left-0 z-50 w-72 bg-[#0f172a] text-slate-300 transform transition-transform duration-300 ease-in-out
-        md:relative md:translate-x-0
-        ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
-      `}>
-        <div className="h-full flex flex-col p-6">
-          <div className="mb-10 flex items-center gap-3 px-2">
-            <div className="bg-blue-600 p-2 rounded-lg shadow-lg shadow-blue-500/20">
-              <ShieldCheck className="text-white" size={28} />
+            {/* Desktop Navigation Items */}
+            <div className="hidden md:flex items-center gap-2">
+              {navItems.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`
+                    flex items-center gap-2 py-2 px-4 rounded-xl transition-all duration-200
+                    ${pathname === item.href
+                      ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
+                      : 'text-slate-400 hover:bg-white/5 hover:text-white'}
+                  `}
+                >
+                  <item.icon size={18} />
+                  <span className="font-semibold text-sm">{item.name}</span>
+                </Link>
+              ))}
+
+              <div className="h-6 w-px bg-white/10 mx-4"></div>
+
+              {/* User Dropdown / Info (Simplified for now) */}
+              <div className="flex items-center gap-4">
+                <div className="hidden lg:flex flex-col items-end">
+                  <span className="text-xs text-slate-500 font-bold uppercase tracking-tighter">Admin</span>
+                  <span className="text-xs font-medium text-slate-300 max-w-[150px] truncate">{user.email}</span>
+                </div>
+                <Button
+                  onClick={handleLogout}
+                  variant="ghost"
+                  className="p-2 text-slate-400 hover:text-red-400 hover:bg-red-400/10 rounded-xl transition-all"
+                >
+                  <LogOut size={20} />
+                </Button>
+              </div>
             </div>
-            <div>
-              <h1 className="text-2xl font-bold text-white tracking-tight">DialyStock</h1>
-              <p className="text-xs text-blue-400 font-medium tracking-widest uppercase">Global Admin</p>
+
+            {/* Mobile Menu Toggle */}
+            <div className="md:hidden">
+              <button
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="p-2 text-white bg-white/5 rounded-xl border border-white/10"
+              >
+                {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+              </button>
             </div>
           </div>
+        </div>
 
-          <nav className="flex-1 space-y-2">
+        {/* Mobile menu content */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden absolute top-20 inset-x-0 bg-[#0f172a] border-t border-white/5 p-4 space-y-2 animate-in slide-in-from-top-4 duration-300">
             {navItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
                 onClick={() => setIsMobileMenuOpen(false)}
                 className={`
-                  flex items-center gap-4 py-3.5 px-4 rounded-xl transition-all duration-200 group
+                  flex items-center gap-4 py-4 px-5 rounded-2xl transition-all
                   ${pathname === item.href
-                    ? 'bg-blue-600/10 text-white border border-blue-500/20 shadow-inner'
-                    : 'hover:bg-white/5 hover:text-white'}
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-white/5 text-slate-300'}
                 `}
               >
-                <item.icon size={20} className={pathname === item.href ? 'text-blue-400' : 'group-hover:text-blue-400'} />
-                <span className="font-medium">{item.name}</span>
-                {pathname === item.href && (
-                  <div className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.8)]"></div>
-                )}
+                <item.icon size={20} />
+                <span className="font-bold">{item.name}</span>
               </Link>
             ))}
-          </nav>
-
-          <div className="mt-auto pt-6 border-t border-white/10">
-            <div className="bg-white/5 rounded-2xl p-4 mb-4">
-              <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-1">Identificado como</p>
-              <p className="text-sm font-medium text-white truncate">{user.email}</p>
+            <div className="pt-4 mt-2 border-t border-white/5">
+              <Button
+                onClick={handleLogout}
+                className="w-full justify-start gap-4 py-8 bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white border border-red-500/20 rounded-2xl"
+              >
+                <LogOut size={20} />
+                <span className="font-bold">Cerrar Sesión</span>
+              </Button>
             </div>
-            <Button
-              onClick={handleLogout}
-              variant="ghost"
-              className="w-full justify-start gap-4 py-6 text-slate-400 hover:text-red-400 hover:bg-red-400/10 rounded-xl transition-all"
-            >
-              <LogOut size={20} />
-              <span className="font-medium">Cerrar Sesión</span>
-            </Button>
           </div>
-        </div>
-      </aside>
+        )}
+      </nav>
 
-      {/* Main Content */}
-      <main className="flex-1 h-screen overflow-y-auto bg-[#f8fafc] dark:bg-[#0f172a]">
+      {/* Main Content Area */}
+      <main className="min-h-[calc(100vh-80px)] bg-[#f8fafc] dark:bg-[#0f172a]">
         <div className="p-4 md:p-8 lg:p-12 max-w-7xl mx-auto">
           {children}
         </div>
       </main>
-
-      {/* Mobile Overlay */}
-      {isMobileMenuOpen && (
-        <div
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden"
-          onClick={() => setIsMobileMenuOpen(false)}
-        />
-      )}
     </div>
   )
 }

@@ -578,11 +578,12 @@ export default function SalaPDPage() {
             )}
 
             <div className="footer-credits text-center py-6 border-t border-slate-100 opacity-80">
-                <p>💻 <strong>Desarrollado por Manuel Madrid</strong> | DialyStock © 2025 </p>
+                💻 <strong>Sistema desarrollado por Manuel Madrid</strong> |
+                DialyStock © 2025 |
                 <a
-                    href={`https://wa.me/573045788873?text=${encodeURIComponent('Hola Manuel, necesito soporte técnico con el sistema DialyStock de la Sala PD.')}`}
+                    href={`https://wa.me/573045788873?text=${encodeURIComponent('Hola Manuel, soy de la sala PD y necesito soporte con DialyStock.')}`}
                     target="_blank"
-                    className="text-emerald-500 font-bold hover:underline text-sm"
+                    className="ml-2 text-emerald-400 font-bold hover:underline"
                 >
                     Soporte WhatsApp: +57 304 578 8873
                 </a>

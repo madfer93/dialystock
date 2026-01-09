@@ -458,12 +458,13 @@ export default function SalaQuimicoPage() {
                 </div>
             </div>
 
-            <div className="footer-credits text-center py-6 border-t border-slate-100 opacity-80">
-                <p>💻 <strong>Desarrollado por Manuel Madrid</strong> | DialyStock © 2025 </p>
+            <div className="footer-credits">
+                💻 <strong>Sistema desarrollado por Manuel Madrid</strong> |
+                DialyStock © 2025 |
                 <a
-                    href={`https://wa.me/573045788873?text=${encodeURIComponent('Hola Manuel, soy de Sala Químico y necesito soporte con DialyStock.')}`}
+                    href={`https://wa.me/573045788873?text=${encodeURIComponent('Hola Manuel, soy de la sala químico y necesito soporte con DialyStock.')}`}
                     target="_blank"
-                    className="text-emerald-500 font-bold hover:underline text-sm"
+                    className="ml-2 text-emerald-400 font-bold hover:underline"
                 >
                     Soporte WhatsApp: +57 304 578 8873
                 </a>
