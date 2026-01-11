@@ -1,14 +1,22 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-// Cliente con service role para acceder a datos del tenant
-const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+// Cliente se inicializará dentro del handler para evitar errores de build
+// si faltan las variables de entorno en tiempo de compilación
 
 export async function POST(req: Request) {
     try {
+        // Inicializar cliente aquí para seguridad en build-time
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+        const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+        if (!supabaseUrl || !supabaseKey) {
+            console.error('Faltan variables de entorno de Supabase')
+            return NextResponse.json({ error: 'Error de configuración del servidor' }, { status: 500 })
+        }
+
+        const supabaseAdmin = createClient(supabaseUrl, supabaseKey)
+
         const body = await req.json()
         const { message, tenantId, clinicaNombre, estadisticas, historial } = body
 
