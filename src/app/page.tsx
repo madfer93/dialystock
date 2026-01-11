@@ -277,142 +277,142 @@ export default function Home() {
 
       <main className="relative z-10">
         {/* Hero Section */}
-        <section className="pt-12 md:pt-20 pb-16 md:pb-32 px-4 sm:px-6">
-          <div className="max-w-7xl mx-auto text-center">
-            <div className="inline-flex items-center gap-2 px-3 md:px-4 py-1.5 md:py-2 bg-blue-500/10 border border-blue-500/20 rounded-full text-blue-400 text-[10px] md:text-xs font-bold mb-6 md:mb-8 animate-bounce">
-              <ShieldCheck size={12} className="md:w-[14px] md:h-[14px]" />
-              NUEVA VERSIÓN 4.0 DISPONIBLE
+        <section className="relative pt-20 md:pt-32 pb-20 md:pb-40 px-4 sm:px-6 overflow-hidden">
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-full pointer-events-none">
+            <div className="absolute top-[10%] left-[10%] w-72 h-72 bg-blue-500/20 blur-[100px] rounded-full mix-blend-screen animate-blob"></div>
+            <div className="absolute top-[20%] right-[10%] w-72 h-72 bg-purple-500/20 blur-[100px] rounded-full mix-blend-screen animate-blob animation-delay-2000"></div>
+          </div>
+
+          <div className="max-w-5xl mx-auto text-center relative z-10">
+            {/* Badges */}
+            <div className="flex flex-col items-center gap-4 mb-8">
+              <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-500/10 border border-blue-500/20 rounded-full text-blue-400 text-[10px] md:text-xs font-bold uppercase tracking-widest animate-fade-in-up">
+                <ShieldCheck size={12} />
+                Versión 4.0 Estable
+              </div>
+
+              <div className="inline-flex items-center gap-3 px-5 py-2 bg-gradient-to-r from-purple-900/40 to-blue-900/40 border border-purple-500/30 rounded-full backdrop-blur-md shadow-xl shadow-purple-500/10 hover:scale-105 transition-transform cursor-default animate-fade-in-up animation-delay-200">
+                <div className="relative">
+                  <Sparkles size={16} className="text-yellow-400" />
+                  <div className="absolute inset-0 bg-yellow-400 blur-sm opacity-50 animate-pulse"></div>
+                </div>
+                <span className="text-white text-xs md:text-sm font-bold">
+                  2 Meses <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 to-yellow-500">GRATIS</span> de IA Premium
+                </span>
+              </div>
             </div>
 
-            {/* Price Increase Notice */}
-            <div className="inline-flex items-center gap-2 px-4 md:px-6 py-2 md:py-3 bg-gradient-to-r from-purple-500/20 to-blue-500/20 border border-purple-500/30 rounded-full text-purple-300 text-xs md:text-sm font-bold mb-4 shadow-lg shadow-purple-500/10">
-              <Sparkles size={14} className="md:w-4 md:h-4" />
-              <span>🎁 APROVECHA: Sistema IA Premium GRATIS por 2 meses | Después upgrade a $1.2M/mes</span>
-            </div>
-
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-8xl font-black text-white tracking-tight mb-6 md:mb-8 leading-[0.95]">
+            {/* Main Title */}
+            <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black text-white tracking-tight mb-8 leading-[0.9] animate-fade-in-up animation-delay-300">
               Gestión Médica <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-blue-600 to-indigo-600">Sin Errores.</span>
+              <span className="relative">
+                <span className="relative z-10 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-blue-500 to-indigo-600">
+                  Inteligente.
+                </span>
+                <span className="absolute -bottom-2 left-0 w-full h-[10px] bg-blue-600/20 blur-lg"></span>
+              </span>
             </h1>
-            <p className="max-w-2xl mx-auto text-base md:text-xl text-slate-400 mb-8 md:mb-12 leading-relaxed px-4">
-              DialyStock es la plataforma líder para el control de inventarios en unidades renales.
-              Optimiza tus procesos de hemodiálisis y diálisis peritoneal con trazabilidad total.
+
+            {/* Subtitle */}
+            <p className="max-w-2xl mx-auto text-lg md:text-xl text-slate-400 mb-10 leading-relaxed animate-fade-in-up animation-delay-400">
+              La primera plataforma que predice el desabastecimiento antes de que ocurra.
+              Control total para Hemodiálisis, Peritoneal y Farmacia.
             </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 md:gap-4 px-4">
+
+            {/* CTAs */}
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in-up animation-delay-500">
               <button
                 onClick={() => setShowLogin(true)}
-                className="group w-full sm:w-auto px-6 md:px-10 py-4 md:py-5 bg-white text-slate-900 rounded-xl md:rounded-2xl font-black text-base md:text-lg hover:bg-blue-50 transition-all flex items-center justify-center gap-2 md:gap-3 shadow-2xl"
+                className="group relative w-full sm:w-auto px-8 py-4 bg-white text-slate-950 rounded-2xl font-black text-lg hover:bg-blue-50 transition-all flex items-center justify-center gap-3 shadow-[0_0_40px_-10px_rgba(255,255,255,0.3)] hover:shadow-[0_0_60px_-15px_rgba(255,255,255,0.4)]"
               >
                 Empezar Ahora
-                <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
               </button>
               <a
-                href={`https://wa.me/573045788873?text=${encodeURIComponent('Hola Manuel, me interesa una demostración de DialyStock.')}`}
+                href={`https://wa.me/573045788873?text=${encodeURIComponent('Hola, me interesa ver una demo de DialyStock IA')}`}
                 target="_blank"
-                className="w-full sm:w-auto px-6 md:px-10 py-4 md:py-5 bg-slate-800 text-white rounded-xl md:rounded-2xl font-bold text-base md:text-lg hover:bg-slate-700 transition-all border border-white/10 flex items-center justify-center gap-2 md:gap-3"
+                className="w-full sm:w-auto px-8 py-4 bg-slate-800/80 backdrop-blur text-white rounded-2xl font-bold text-lg hover:bg-slate-700 transition-all border border-white/10 flex items-center justify-center gap-3"
               >
-                <MessageCircle size={18} />
+                <MessageCircle size={20} />
                 Agendar Demo
               </a>
             </div>
           </div>
         </section>
 
-        {/* Modules Section */}
-        <section id="modulos" className="py-16 md:py-32 bg-slate-900/30">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6">
-            <div className="text-center mb-12 md:mb-20">
-              <h2 className="text-3xl md:text-4xl font-black text-white mb-3 md:mb-4">Ecosistema Integral</h2>
-              <p className="text-slate-400 font-medium text-sm md:text-base">Módulos especializados para cada área de tu clínica renal.</p>
+        {/* AI Brain Section (NEW) */}
+        <section className="py-20 bg-slate-900/50 border-y border-white/5 relative overflow-hidden">
+          <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-[0.05]"></div>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
+            <div className="text-center mb-16">
+              <h2 className="text-3xl md:text-5xl font-black text-white mb-6">El Cerebro de tu Clínica</h2>
+              <p className="text-slate-400 max-w-2xl mx-auto">
+                Nuestro motor de IA no solo registra datos, los analiza en tiempo real para tomar decisiones autónomas.
+              </p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8">
-              {modules.map((m: any, idx) => (
-                <Link
-                  key={idx}
-                  href={m.link}
-                  className="group relative bg-slate-800/50 border border-white/10 rounded-2xl md:rounded-[2rem] p-6 md:p-8 hover:bg-slate-800 transition-all hover:-translate-y-2 cursor-pointer overflow-hidden border-b-4 border-b-transparent hover:border-b-blue-500 shadow-xl"
-                >
-                  <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${m.color} opacity-0 group-hover:opacity-10 blur-3xl transition-opacity`}></div>
-                  <div className={`w-12 h-12 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-gradient-to-br ${m.color} flex items-center justify-center mb-4 md:mb-6 shadow-lg shadow-black/20 group-hover:scale-110 transition-transform`}>
-                    <m.icon className="text-white" size={24} />
+            <div className="grid md:grid-cols-3 gap-8">
+              {[
+                { title: 'Predicción de Stock', desc: 'Analiza patrones de consumo históricos para alertarte 7 días antes de que se agote un insumo crítico.', icon: Activity, color: 'text-pink-500' },
+                { title: 'Auto-Aprobación', desc: 'Permite que la IA apruebe solicitudes rutinarias los fines de semana basándose en la confianza del producto.', icon: ShieldCheck, color: 'text-blue-500' },
+                { title: 'Auditoría Forense', desc: 'Detecta anomalías en el consumo y alerta sobre posibles pérdidas o usos indebidos de material.', icon: CheckCircle2, color: 'text-emerald-500' }
+              ].map((item, i) => (
+                <div key={i} className="bg-slate-800/40 p-8 rounded-3xl border border-white/5 hover:border-white/10 transition-all hover:-translate-y-1">
+                  <div className={`w-14 h-14 rounded-2xl bg-slate-900 flex items-center justify-center mb-6 shadow-lg ${item.color}`}>
+                    <item.icon size={32} />
                   </div>
-                  <div className="inline-block px-2 md:px-3 py-1 bg-white/5 rounded-full text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 md:mb-4">
-                    {m.badge}
-                  </div>
-                  <h3 className="text-lg md:text-xl font-bold text-white mb-2 md:mb-3">{m.title}</h3>
-                  <p className="text-xs md:text-sm text-slate-400 leading-relaxed mb-4 md:mb-6">
-                    {m.desc}
+                  <h3 className="text-xl font-bold text-white mb-3">{item.title}</h3>
+                  <p className="text-slate-400 leading-relaxed text-sm">
+                    {item.desc}
                   </p>
-                  <div className="flex items-center gap-2 text-blue-400 text-[9px] md:text-[10px] font-black uppercase tracking-widest group-hover:gap-3 transition-all">
-                    Simular Proceso <ChevronRight size={12} className="md:w-[14px] md:h-[14px]" />
-                  </div>
-                </Link>
+                </div>
               ))}
             </div>
           </div>
         </section>
 
-        {/* Benefits Section */}
-        <section id="beneficios" className="py-16 md:py-32">
+        {/* Modules Section */}
+        <section id="modulos" className="py-24">
           <div className="max-w-7xl mx-auto px-4 sm:px-6">
-            <div className="bg-gradient-to-br from-blue-600 to-indigo-800 rounded-2xl md:rounded-[3rem] p-6 sm:p-10 md:p-16 lg:p-24 overflow-hidden relative">
-              <div className="absolute top-0 right-0 w-[40%] h-full bg-black/10 backdrop-blur-2xl skew-x-12 translate-x-1/2"></div>
-              <div className="relative z-10 grid md:grid-cols-2 gap-8 md:gap-16 items-center">
-                <div>
-                  <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-white mb-6 md:mb-8 leading-tight">
-                    ¿Por qué elegir DialyStock para tu clínica?
-                  </h2>
-                  <div className="space-y-6">
-                    {[
-                      { t: 'Trazabilidad Total', d: 'Seguimiento de lotes y fechas de vencimiento automatizado.' },
-                      { t: 'Reportes en Tiempo Real', d: 'Gráficos de consumo y stock críticos con un solo clic.' },
-                      { t: 'templates Recurrentes', d: 'Crea pedidos en segundos usando tus plantillas favoritas.' },
-                      { t: 'Soporte 24/7', d: 'Atención personalizada vía WhatsApp para soporte técnico.' }
-                    ].map((b, i) => (
-                      <div key={i} className="flex gap-4">
-                        <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center shrink-0">
-                          <CheckCircle2 className="text-white" size={20} />
-                        </div>
-                        <div>
-                          <h4 className="text-lg font-bold text-white">{b.t}</h4>
-                          <p className="text-blue-100 text-sm">{b.d}</p>
-                        </div>
-                      </div>
-                    ))}
+            <div className="text-center mb-20">
+              <h2 className="text-3xl md:text-4xl font-black text-white mb-4">Ecosistema Modular</h2>
+              <p className="text-slate-400">Todo lo que necesitas, integrado en una sola plataforma.</p>
+            </div>
+
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {modules.map((m: any, idx) => (
+                <Link
+                  key={idx}
+                  href={m.link}
+                  className="group relative bg-slate-900 border border-white/10 rounded-[2rem] p-8 hover:bg-slate-800 transition-all overflow-hidden flex flex-col h-full"
+                >
+                  <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${m.color} opacity-[0.03] group-hover:opacity-10 blur-2xl transition-all`}></div>
+
+                  <div className="mb-auto">
+                    <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${m.color} flex items-center justify-center mb-6 shadow-lg transform group-hover:scale-110 transition-transform duration-500`}>
+                      <m.icon className="text-white" size={24} />
+                    </div>
+
+                    <div className="flex items-center gap-2 mb-4">
+                      <span className="px-2 py-1 rounded-md bg-white/5 border border-white/5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                        {m.badge}
+                      </span>
+                    </div>
+
+                    <h3 className="text-xl font-bold text-white mb-3 group-hover:text-blue-400 transition-colors">{m.title}</h3>
+                    <p className="text-sm text-slate-400 leading-relaxed mb-6">
+                      {m.desc}
+                    </p>
                   </div>
-                </div>
-                <div className="bg-white/10 backdrop-blur-md rounded-3xl p-8 border border-white/20">
-                  <div className="flex items-center gap-4 mb-8">
-                    <div className="w-12 h-12 rounded-2xl bg-white text-blue-600 flex items-center justify-center shadow-lg">
-                      <Activity size={24} />
-                    </div>
-                    <div>
-                      <p className="text-white font-black text-2xl">Métrica Real</p>
-                      <p className="text-blue-200 text-sm">Ahorro operativo garantizado</p>
-                    </div>
-                  </div>
-                  <div className="space-y-6">
-                    <div className="flex justify-between items-end">
-                      <span className="text-sm font-bold text-white">Eficiencia en Despacho</span>
-                      <span className="text-3xl font-black text-white">+85%</span>
-                    </div>
-                    <div className="w-full h-3 bg-white/10 rounded-full overflow-hidden">
-                      <div className="w-[85%] h-full bg-white rounded-full"></div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4 mt-8">
-                      <div className="p-4 bg-black/20 rounded-2xl border border-white/5">
-                        <p className="text-blue-200 text-[10px] font-bold uppercase">Clínicas</p>
-                        <p className="text-2xl font-black text-white">12+</p>
-                      </div>
-                      <div className="p-4 bg-black/20 rounded-2xl border border-white/5">
-                        <p className="text-blue-200 text-[10px] font-bold uppercase">Países</p>
-                        <p className="text-2xl font-black text-white">Región</p>
-                      </div>
+
+                  <div className="mt-8 pt-6 border-t border-white/5 flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-500 group-hover:text-white transition-colors">Explorar módulo</span>
+                    <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-slate-400 group-hover:bg-blue-600 group-hover:text-white transition-all">
+                      <ChevronRight size={14} />
                     </div>
                   </div>
-                </div>
-              </div>
+                </Link>
+              ))}
             </div>
           </div>
         </section>

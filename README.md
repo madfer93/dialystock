@@ -437,7 +437,7 @@ Las contribuciones son bienvenidas. Por favor:
 ## 📞 Soporte
 
 - **WhatsApp:** +57 304 578 8873
-- **Email:** soporte@dialystock.com
+- **Email:** madfer1993@gmail.com
 - **Documentación:** [Wiki del Proyecto](https://github.com/madfer93/dialystock/wiki)
 - **Issues:** [GitHub Issues](https://github.com/madfer93/dialystock/issues)
 
