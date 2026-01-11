@@ -557,7 +557,7 @@ export default function Home() {
                     <div>
                       <h4 className="font-bold text-white mb-1">Email</h4>
                       <p className="text-slate-400 text-sm">soporte@dialystock.com</p>
-                      <a href="mailto:soporte@dialystock.com" className="text-blue-400 text-xs font-bold hover:underline">
+                      <a href="mailto:madfer1993+soporteDialystock@gmail.com" className="text-blue-400 text-xs font-bold hover:underline">
                         Enviar correo →
                       </a>
                     </div>
