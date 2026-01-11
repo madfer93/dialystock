@@ -78,23 +78,35 @@ export default function Home() {
     {
       id: 'pro',
       name: 'Professional',
-      price: '$500.000',
+      price: '$1.200.000',
       period: 'COP / mes',
-      desc: 'Gestión profesional para clínicas en crecimiento.',
-      features: ['Hasta 5 Sedes', 'Auditoría Pro', 'Módulo Farmacia Premium', 'Soporte 24/7 WhatsApp'],
+      desc: 'Gestión profesional para clínicas consolidadas.',
+      features: ['Hasta 5 Sedes', 'Auditoría Pro', 'Módulo Farmacia Premium', 'Soporte 8/5 Prioritario'],
       color: 'from-blue-600 to-indigo-700',
       cta: 'Comprar Plan Pro',
       link: wompiLinks.pro,
+      popular: false
+    },
+    {
+      id: 'premium_ia',
+      name: 'Premium IA',
+      price: '$2.500.000',
+      period: 'COP / mes',
+      desc: 'Potencia total con Inteligencia Artificial predictiva.',
+      features: ['✨ 2 MESES GRATIS', 'Sedes Ilimitadas', '🤖 Predicciones Stock', '🤖 Auto-aprobación', '🛡️ Auditoría Forense'],
+      color: 'from-purple-600 to-pink-700',
+      cta: 'Probar IA Gratis',
+      link: wompiLinks.pro, // Temporal, usuario debe actualizar
       popular: true
     },
     {
       id: 'enterprise',
       name: 'Enterprise',
-      price: '$1.000.000+',
+      price: 'Desde $5M',
       period: 'COP / mes',
       desc: 'Para redes hospitalarias con requerimientos masivos.',
-      features: ['Sedes Ilimitadas', 'Analítica Avanzada con IA', 'Custom Roles', 'Gestor de cuenta dedicado'],
-      color: 'from-purple-600 to-indigo-900',
+      features: ['Infraestructura Dedicada', 'IA Entrenada a Medida', 'Integración SAP/Oracle', 'Soporte 24/7 VIP'],
+      color: 'from-slate-700 to-slate-900',
       cta: 'Contactar Ventas',
       link: wompiLinks.ent
     }
