@@ -1,7 +1,7 @@
 'use client'
 
 import { supabase } from '@/lib/supabaseClient'
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import {
     LucideLayoutDashboard,
@@ -24,6 +24,7 @@ import {
     LucideEdit,
     LucideMessageCircle
 } from 'lucide-react'
+import { useLearningAnalytics } from '@/hooks/useLearningAnalytics'
 
 // --- ESTILOS ORIGINALES INYECTADOS ---
 const styles = `
@@ -133,6 +134,16 @@ export default function SalaHDPage() {
     const [solicitudEditando, setSolicitudEditando] = useState<any>(null)
     const [notificacionesNoLeidas, setNotificacionesNoLeidas] = useState(0)
 
+    // Hook de aprendizaje automático (captura silenciosa de eventos)
+    const analyticsContext = useMemo(() => ({
+        tenantId,
+        userId,
+        userName: solicitanteNombre,
+        userRole: 'sala_hd'
+    }), [tenantId, userId, solicitanteNombre])
+
+    const { eventos: analytics } = useLearningAnalytics(analyticsContext.tenantId ? analyticsContext : null)
+
     // Sonido Notificación
     const playNotificationSound = () => {
         try {
@@ -224,6 +235,14 @@ export default function SalaHDPage() {
 
         return () => { supabase.removeChannel(channel) }
     }, [tenantId, userId]) // Re-run if tenantId/userId changes
+
+    // Guardar borrador del carrito automáticamente
+    useEffect(() => {
+        if (carrito.length > 0) {
+            localStorage.setItem('draft_carrito_hd', JSON.stringify(carrito))
+            console.log('💾 Borrador guardado automáticamente')
+        }
+    }, [carrito])
 
     // ... (rest of code) ...
 
@@ -474,6 +493,13 @@ export default function SalaHDPage() {
                     comentario: 'Pedido modificado y reenviado para revisión'
                 })
 
+                // 📊 Registrar evento de aprendizaje (reenvío)
+                analytics?.solicitudCreada({
+                    solicitudId: solicitudId,
+                    productos: carrito.length,
+                    tipo: 'HD_REENVIO'
+                })
+
                 alert('✅ Pedido corregido y reenviado a Jefe HD para revisión #' + solicitudId.slice(0, 8))
                 setSolicitudEditando(null)
 
@@ -531,6 +557,13 @@ export default function SalaHDPage() {
                     titulo: `Nueva solicitud de ${solicitanteNombre}`,
                     mensaje: `Pedido #${sol.id.slice(0, 8)} con ${carrito.length} productos requiere revisión`,
                     solicitud_id: sol.id
+                })
+
+                // 📊 Registrar evento de aprendizaje (nueva solicitud)
+                analytics?.solicitudCreada({
+                    solicitudId: sol.id,
+                    productos: carrito.length,
+                    tipo: 'HD'
                 })
 
                 alert('✅ Solicitud enviada a Jefe HD para revisión #' + sol.id.slice(0, 8))

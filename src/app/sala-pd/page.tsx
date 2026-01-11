@@ -1,12 +1,13 @@
 'use client'
 
 import { supabase } from '@/lib/supabaseClient'
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import {
     LucideLogOut, LucideClipboardList, LucideCheckCircle2, LucidePackage,
     LucideSearch, LucidePlus, LucideTrash, LucideSave, LucideFileText, LucideMoon, LucideSun, LucideLayoutTemplate
 } from 'lucide-react'
+import { useLearningAnalytics } from '@/hooks/useLearningAnalytics'
 
 // --- ESTILOS DEL USUARIO (Sistema PD V3.1) ---
 const styles = `
@@ -198,6 +199,15 @@ export default function SalaPDPage() {
     const [nombreTemplate, setNombreTemplate] = useState('')
     const [modalDetalleOpen, setModalDetalleOpen] = useState<any>(null)
 
+    // Analytics - Aprendizaje automático
+    const analyticsContext = useMemo(() => ({
+        tenantId,
+        userId,
+        userName,
+        userRole: 'sala_pd'
+    }), [tenantId, userId, userName])
+    const { eventos: analytics } = useLearningAnalytics(analyticsContext.tenantId ? analyticsContext : null)
+
     // INIT
     useEffect(() => {
         // Inject styles
@@ -337,6 +347,13 @@ export default function SalaPDPage() {
 
             const { error: itemsError } = await supabase.from('solicitudes_items').insert(itemsData)
             if (itemsError) throw itemsError
+
+            // 📊 Registrar evento de aprendizaje
+            analytics?.solicitudCreada({
+                solicitudId: id,
+                productos: items.length,
+                tipo: 'PD'
+            })
 
             alert('✅ Solicitud PD enviada')
             limpiarFormulario()

@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
+import { useLearningAnalytics } from '@/hooks/useLearningAnalytics'
 import {
     LayoutDashboard,
     FileText,
@@ -78,6 +79,15 @@ export default function JefeHDPage() {
     // Print ref
     const printRef = useRef<HTMLDivElement>(null)
 
+    // Analytics - Aprendizaje automático
+    const analyticsContext = useMemo(() => ({
+        tenantId,
+        userId,
+        userName: userEmail.split('@')[0],
+        userRole: 'jefe_hd'
+    }), [tenantId, userId, userEmail])
+    const { eventos: analytics } = useLearningAnalytics(analyticsContext.tenantId ? analyticsContext : null)
+
     // Styles (Reusing standard styles)
     const styles = `
     :root {
@@ -135,9 +145,58 @@ export default function JefeHDPage() {
 
     @media print {
       body * { visibility: hidden; }
-      .print-area, .print-area * { visibility: visible; }
-      .print-area { position: absolute; left: 0; top: 0; width: 100%; }
+      .print-area, .print-area * { visibility: visible !important; }
+      .print-area {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        background: white !important;
+        color: black !important;
+        padding: 20px !important;
+      }
       .no-print { display: none !important; }
+      .print-only { display: block !important; }
+      .print-area table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+      }
+      .print-area th, .print-area td {
+        border: 1px solid #333 !important;
+        padding: 8px !important;
+        color: black !important;
+      }
+      .print-area th {
+        background: #f0f0f0 !important;
+        font-weight: bold !important;
+      }
+      .print-header {
+        display: block !important;
+        border-bottom: 2px solid #333 !important;
+        padding-bottom: 15px !important;
+        margin-bottom: 15px !important;
+      }
+      .print-header h2 {
+        font-size: 24px !important;
+        margin-bottom: 10px !important;
+      }
+      .print-info-grid {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 10px !important;
+        margin-top: 10px !important;
+      }
+      .print-info-item {
+        display: flex !important;
+        gap: 5px !important;
+      }
+      .print-obs-general {
+        background: #f5f5f5 !important;
+        border: 1px solid #ccc !important;
+        padding: 10px !important;
+        margin: 15px 0 !important;
+        border-radius: 5px !important;
+      }
     }
   `
 
@@ -368,6 +427,23 @@ export default function JefeHDPage() {
                 solicitud_id: modalDetalle.id
             })
 
+            // Registrar evento de aprendizaje
+            analytics?.solicitudAprobada({
+                solicitudId: modalDetalle.id
+            })
+
+            // 🧠 APRENDIZAJE IA: Actualizar confianza de cada producto
+            for (const item of itemsDetalle) {
+                await supabase.rpc('actualizar_confianza_producto', {
+                    p_tenant_id: tenantId,
+                    p_producto_codigo: item.producto_codigo,
+                    p_descripcion: item.descripcion,
+                    p_cantidad: item.cantidad_solicitada || 1,
+                    p_fue_aprobado: true,
+                    p_solicitante: modalDetalle.solicitante
+                })
+            }
+
             alert('✅ Solicitud aprobada y enviada a Farmacia')
             setModalDetalle(null)
             cargarDatos()
@@ -422,6 +498,24 @@ export default function JefeHDPage() {
                 mensaje: `Tu pedido #${modalDetalle.id.slice(0, 8)} fue devuelto. Motivo: ${comentarioRechazo}`,
                 solicitud_id: modalDetalle.id
             })
+
+            // Registrar evento de aprendizaje
+            analytics?.solicitudDevuelta({
+                solicitudId: modalDetalle.id,
+                motivo: comentarioRechazo
+            })
+
+            // 🧠 APRENDIZAJE IA: Registrar rechazo de productos (baja confianza)
+            for (const item of itemsDetalle) {
+                await supabase.rpc('actualizar_confianza_producto', {
+                    p_tenant_id: tenantId,
+                    p_producto_codigo: item.producto_codigo,
+                    p_descripcion: item.descripcion,
+                    p_cantidad: item.cantidad_solicitada || 1,
+                    p_fue_aprobado: false,
+                    p_solicitante: modalDetalle.solicitante
+                })
+            }
 
             alert('✅ Solicitud devuelta a Sala HD')
             setModalDetalle(null)
@@ -862,9 +956,9 @@ export default function JefeHDPage() {
 
             {/* MODAL DETALLE/APROBACIÓN SOLICITUD */}
             {modalDetalle && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[1000] p-4 no-print">
-                    <div className="bg-[var(--bg-primary)] w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in duration-200">
-                        <div className="p-6 border-b border-[var(--border-color)] flex justify-between items-center bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[1000] p-4 print:bg-white print:static print:p-0">
+                    <div className="bg-[var(--bg-primary)] w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in duration-200 print:shadow-none print:rounded-none print:max-w-none">
+                        <div className="p-6 border-b border-[var(--border-color)] flex justify-between items-center bg-gradient-to-r from-blue-600 to-indigo-600 text-white no-print">
                             <div>
                                 <h3 className="text-xl font-bold">📋 Revisión de Solicitud #{modalDetalle.id.slice(0, 8)}</h3>
                                 <p className="text-white/80 text-sm">Solicitado por: {modalDetalle.solicitante} | {new Date(modalDetalle.created_at).toLocaleString()}</p>
@@ -881,22 +975,47 @@ export default function JefeHDPage() {
 
                         {/* Área imprimible */}
                         <div ref={printRef} className="print-area">
-                            {/* Header para impresión */}
-                            <div className="hidden print:block p-4 border-b">
-                                <h2 className="text-2xl font-bold">DialyStock - Solicitud de Pedido</h2>
-                                <p>Solicitud #{modalDetalle.id.slice(0, 8)} | Fecha: {new Date(modalDetalle.created_at).toLocaleString()}</p>
-                                <p>Solicitante: {modalDetalle.solicitante} | Área: {modalDetalle.area}</p>
+                            {/* Header para impresión - visible solo al imprimir */}
+                            <div className="print-header hidden print:block">
+                                <h2 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '10px' }}>
+                                    DialyStock - Solicitud de Pedido
+                                </h2>
+                                <div className="print-info-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                                    <div className="print-info-item">
+                                        <strong>Solicitud:</strong> #{modalDetalle.id.slice(0, 8)}
+                                    </div>
+                                    <div className="print-info-item">
+                                        <strong>Fecha:</strong> {new Date(modalDetalle.created_at).toLocaleString()}
+                                    </div>
+                                    <div className="print-info-item">
+                                        <strong>Solicitante:</strong> {modalDetalle.solicitante}
+                                    </div>
+                                    <div className="print-info-item">
+                                        <strong>Área:</strong> {modalDetalle.area || 'Sala HD'}
+                                    </div>
+                                    {modalDetalle.paciente && (
+                                        <div className="print-info-item" style={{ gridColumn: 'span 2' }}>
+                                            <strong>Paciente:</strong> {modalDetalle.paciente}
+                                        </div>
+                                    )}
+                                </div>
+                                {modalDetalle.observacion_general && (
+                                    <div className="print-obs-general" style={{ marginTop: '15px', padding: '10px', background: '#f5f5f5', border: '1px solid #ccc', borderRadius: '5px' }}>
+                                        <strong>Observación General:</strong>
+                                        <p style={{ margin: '5px 0 0 0' }}>{modalDetalle.observacion_general}</p>
+                                    </div>
+                                )}
                             </div>
 
-                            {/* Observación general */}
+                            {/* Observación general - visible en pantalla */}
                             {modalDetalle.observacion_general && (
-                                <div className="p-4 bg-blue-50 border-b border-blue-100">
+                                <div className="p-4 bg-blue-50 border-b border-blue-100 print:hidden">
                                     <span className="font-bold text-blue-800">Observación General:</span>
                                     <p className="text-blue-700">{modalDetalle.observacion_general}</p>
                                 </div>
                             )}
 
-                            <div className="p-6 max-h-[50vh] overflow-y-auto">
+                            <div className="p-6 max-h-[50vh] overflow-y-auto print:max-h-none print:overflow-visible">
                                 <table className="w-full text-sm">
                                     <thead className="text-[var(--text-secondary)] border-b-2 border-[var(--border-color)]">
                                         <tr>
@@ -929,12 +1048,20 @@ export default function JefeHDPage() {
                                     <span className="font-bold">Total de productos: {itemsDetalle.length}</span>
                                     <span className="font-bold">Total unidades: {itemsDetalle.reduce((sum, i) => sum + (i.cantidad_solicitada || 0), 0)}</span>
                                 </div>
+
+                                {/* Pie de página para impresión */}
+                                <div className="hidden print:block mt-8 pt-4 border-t-2 border-gray-400">
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
+                                        <span>DialyStock © 2025</span>
+                                        <span>Impreso: {new Date().toLocaleString()}</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
                         {/* Acciones de aprobación (solo para pendientes) */}
                         {modalDetalle.estado_aprobacion === 'pendiente_revision' && (
-                            <div className="p-6 border-t border-[var(--border-color)] bg-[var(--bg-secondary)]">
+                            <div className="p-6 border-t border-[var(--border-color)] bg-[var(--bg-secondary)] no-print">
                                 <div className="mb-4">
                                     <label className="block font-bold mb-2 text-red-600">
                                         ⚠️ Motivo de Devolución (obligatorio si rechaza)
@@ -976,7 +1103,7 @@ export default function JefeHDPage() {
 
                         {/* Info para solicitudes ya procesadas */}
                         {modalDetalle.estado_aprobacion !== 'pendiente_revision' && (
-                            <div className="p-6 border-t border-[var(--border-color)] bg-[var(--bg-secondary)]">
+                            <div className="p-6 border-t border-[var(--border-color)] bg-[var(--bg-secondary)] no-print">
                                 <div className="flex items-center gap-4">
                                     {modalDetalle.estado_aprobacion === 'aprobado' && (
                                         <span className="flex items-center gap-2 text-green-600 font-bold">
