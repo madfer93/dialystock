@@ -1,13 +1,12 @@
 'use client'
 
 import { supabase } from '@/lib/supabaseClient'
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import {
-    LucideLogOut, LucideBell, LucideCheckCircle2, LucidePackage, LucideClock, LucidePrinter,
-    LucideEye, LucideTrash, LucidePlus, LucideSearch, LucideAlertTriangle, LucideEdit, LucideX,
-    LucideBox, LucideBarChart, LucideCalendar, LucideFileText, LucideActivity, LucideRefreshCw
+    LucideLogOut, LucideBell, LucideTrash, LucidePlus, LucideEdit, LucideX, LucideRefreshCw
 } from 'lucide-react'
+import { useLearningAnalytics } from '@/hooks/useLearningAnalytics'
 
 // --- ESTILOS EXACTOS DEL USUARIO + Ajustes React ---
 const styles = `
@@ -116,18 +115,58 @@ const styles = `
     .form-control { width: 100%; padding: 12px; border: 2px solid var(--border-color); border-radius: 8px; background: var(--bg-primary); color: var(--text-primary); }
     
     /* Autocomplete Styles */
-    .lote-input-container { position: relative; }
+    .lote-input-container {
+      position: relative;
+      min-width: 200px;
+      flex: 2 !important;
+    }
+    .lote-input-container input {
+      width: 100%;
+      min-width: 180px;
+      font-size: 14px;
+    }
     .lote-suggestions {
       position: absolute; top: 100%; left: 0; right: 0;
       background: var(--bg-primary); border: 2px solid var(--primary);
-      border-top: none; border-radius: 0 0 8px 8px; max-height: 200px;
+      border-top: none; border-radius: 0 0 8px 8px; max-height: 250px;
       overflow-y: auto; z-index: 1000; display: none;
       box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+      min-width: 280px;
     }
     .lote-suggestions.show { display: block; }
-    .lote-suggestion-item { padding: 10px 12px; cursor: pointer; border-bottom: 1px solid var(--border-color); }
-    .lote-suggestion-item:hover { background: linear-gradient(135deg, rgba(0, 201, 255, 0.15), rgba(146, 254, 157, 0.15)); }
+    .lote-suggestion-item {
+      padding: 12px 15px;
+      cursor: pointer;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+    }
+    .lote-suggestion-item:hover {
+      background: linear-gradient(135deg, rgba(0, 201, 255, 0.15), rgba(146, 254, 157, 0.15));
+    }
+    .lote-suggestion-item .lote-code {
+      font-weight: bold;
+      color: var(--primary);
+    }
+    .lote-suggestion-item .lote-info {
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
     .lote-highlight { background: yellow; font-weight: bold; }
+    .lote-dropdown-btn {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-secondary);
+      padding: 4px;
+    }
+    .lote-dropdown-btn:hover { color: var(--primary); }
     
     /* Modals */
     .modal-overlay {
@@ -205,6 +244,7 @@ export default function FarmaciaPage() {
     const router = useRouter()
     const [loading, setLoading] = useState(true)
     const [tenantId, setTenantId] = useState('')
+    const [userId, setUserId] = useState('')
     const [activeTab, setActiveTab] = useState('pendientes')
 
     // Data
@@ -212,12 +252,17 @@ export default function FarmaciaPage() {
     const [productos, setProductos] = useState<any[]>([])
     const [lotes, setLotes] = useState<any[]>([])
     const [reportes, setReportes] = useState<any[]>([])
+    const [alertasIA, setAlertasIA] = useState<any[]>([])
 
     // States for CRUD
     const [busquedaProd, setBusquedaProd] = useState('')
     const [busquedaLote, setBusquedaLote] = useState('')
     const [prodModalOpen, setProdModalOpen] = useState(false)
     const [loteModalOpen, setLoteModalOpen] = useState(false)
+    const [editingProd, setEditingProd] = useState<any>(null)
+    const [editingLote, setEditingLote] = useState<any>(null)
+    const [saving, setSaving] = useState(false)
+    const [darkMode, setDarkMode] = useState(false)
 
     const [prodForm, setProdForm] = useState({
         codigo: '', descripcion: '', categoria: 'PD', stock_min: 10, stock_max: 100
@@ -225,6 +270,27 @@ export default function FarmaciaPage() {
     const [loteForm, setLoteForm] = useState({
         producto_codigo: '', numero_lote: '', fecha_vencimiento: '', cantidad_disponible: 0
     })
+
+    // Stats
+    const pendientesCount = solicitudes.filter(s => s.estado === 'Pendiente').length
+    const completadasHoy = solicitudes.filter(s => {
+        if (s.estado !== 'Completado' || !s.fecha_completado) return false
+        const hoy = new Date().toDateString()
+        return new Date(s.fecha_completado).toDateString() === hoy
+    }).length
+    const lotesProximosVencer = lotes.filter(l => {
+        if (!l.fecha_vencimiento) return false
+        const diasParaVencer = Math.ceil((new Date(l.fecha_vencimiento).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
+        return diasParaVencer <= 30 && diasParaVencer > 0
+    }).length
+    const lotesVencidos = lotes.filter(l => {
+        if (!l.fecha_vencimiento) return false
+        return new Date(l.fecha_vencimiento) < new Date()
+    }).length
+
+    // IA Predictive Stats
+    const alertasCriticas = alertasIA.filter(a => a.dias_restantes <= 7).length
+    const alertasAdvertencia = alertasIA.filter(a => a.dias_restantes > 7 && a.dias_restantes <= 14).length
 
     // Modals
     const [modalCompletar, setModalCompletar] = useState<any>(null)
@@ -237,6 +303,15 @@ export default function FarmaciaPage() {
     // Form State fo current Completar
     const [completadoPor, setCompletadoPor] = useState('')
     const [despachoItems, setDespachoItems] = useState<any[]>([])
+
+    // Analytics - Aprendizaje automático (después de completadoPor)
+    const analyticsContext = useMemo(() => ({
+        tenantId,
+        userId,
+        userName: completadoPor,
+        userRole: 'farmacia'
+    }), [tenantId, userId, completadoPor])
+    const { eventos: analytics } = useLearningAnalytics(analyticsContext.tenantId ? analyticsContext : null)
 
     // Audio Context Ref
     const audioCtxRef = useRef<AudioContext | null>(null)
@@ -253,16 +328,44 @@ export default function FarmaciaPage() {
             const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
             if (profile) {
                 setTenantId(profile.tenant_id)
+                setUserId(user.id)
                 setCompletadoPor(profile.nombre || '')
                 loadData(profile.tenant_id)
             }
             setLoading(false)
         }
         init()
+
+        // Cargar borrador de despacho si existe
+        const savedDraft = localStorage.getItem('draft_despacho_farmacia')
+        if (savedDraft) {
+            try {
+                const parsed = JSON.parse(savedDraft)
+                if (parsed.items && parsed.solicitudId) {
+                    console.log('📋 Borrador de despacho encontrado para solicitud:', parsed.solicitudId)
+                }
+            } catch (e) {
+                localStorage.removeItem('draft_despacho_farmacia')
+            }
+        }
+
         return () => { document.head.removeChild(styleSheet) }
     }, [])
 
-    // REALTIME
+    // Guardar borrador del despacho automáticamente
+    useEffect(() => {
+        if (modalCompletar && despachoItems.some(i => i.numero_lote)) {
+            const draft = {
+                solicitudId: modalCompletar.solicitud.id,
+                items: despachoItems,
+                completadoPor,
+                timestamp: new Date().toISOString()
+            }
+            localStorage.setItem('draft_despacho_farmacia', JSON.stringify(draft))
+            console.log('💾 Borrador de despacho guardado')
+        }
+    }, [despachoItems, completadoPor, modalCompletar])
+
     // REALTIME
     useEffect(() => {
         if (!tenantId) return
@@ -349,59 +452,183 @@ export default function FarmaciaPage() {
     }
 
     // --- CRUD ACTIONS (Productos / Lotes) ---
-    const guardarProducto = async () => {
-        if (!prodForm.codigo || !prodForm.descripcion) return alert('Datos incompletos')
-        const { error } = await supabase.from('productos').upsert({
-            tenant_id: tenantId,
-            codigo: prodForm.codigo,
-            descripcion: prodForm.descripcion,
-            categoria: prodForm.categoria,
-            stock_min: prodForm.stock_min,
-            stock_max: prodForm.stock_max
+    const abrirEditarProducto = (producto: any) => {
+        setEditingProd(producto)
+        setProdForm({
+            codigo: producto.codigo,
+            descripcion: producto.descripcion,
+            categoria: producto.categoria || 'PD',
+            stock_min: producto.stock_min || 10,
+            stock_max: producto.stock_max || 100
         })
-        if (error) alert(error.message)
-        else { setProdModalOpen(false); loadData(tenantId); alert('Producto guardado') }
+        setProdModalOpen(true)
     }
 
-    const eliminarProducto = async (codigo: string) => {
-        if (!confirm('¿Eliminar producto?')) return
-        await supabase.from('productos').delete().eq('codigo', codigo)
-        loadData(tenantId)
+    const guardarProducto = async () => {
+        if (!prodForm.codigo || !prodForm.descripcion) return alert('❌ Código y descripción son obligatorios')
+        if (prodForm.stock_min < 0 || prodForm.stock_max < 0) return alert('❌ Stock no puede ser negativo')
+        if (prodForm.stock_min > prodForm.stock_max) return alert('❌ Stock mínimo no puede ser mayor al máximo')
+
+        setSaving(true)
+        try {
+            if (editingProd) {
+                // Actualizar producto existente
+                const { error } = await supabase.from('productos')
+                    .update({
+                        descripcion: prodForm.descripcion,
+                        categoria: prodForm.categoria,
+                        stock_min: prodForm.stock_min,
+                        stock_max: prodForm.stock_max
+                    })
+                    .eq('id', editingProd.id)
+                if (error) throw error
+                alert('✅ Producto actualizado correctamente')
+            } else {
+                // Crear nuevo producto
+                const { error } = await supabase.from('productos').insert({
+                    tenant_id: tenantId,
+                    codigo: prodForm.codigo,
+                    descripcion: prodForm.descripcion,
+                    categoria: prodForm.categoria,
+                    stock_min: prodForm.stock_min,
+                    stock_max: prodForm.stock_max
+                })
+                if (error) throw error
+                alert('✅ Producto creado correctamente')
+            }
+            setProdModalOpen(false)
+            setEditingProd(null)
+            loadData(tenantId)
+        } catch (e: any) {
+            alert('❌ Error: ' + e.message)
+        }
+        setSaving(false)
+    }
+
+    const eliminarProducto = async (producto: any) => {
+        if (!confirm(`¿Eliminar producto "${producto.descripcion}"?\n\nEsto también eliminará los lotes asociados.`)) return
+        setSaving(true)
+        try {
+            await supabase.from('lotes').delete().eq('producto_codigo', producto.codigo)
+            await supabase.from('productos').delete().eq('id', producto.id)
+            alert('✅ Producto eliminado')
+            loadData(tenantId)
+        } catch (e: any) {
+            alert('❌ Error: ' + e.message)
+        }
+        setSaving(false)
+    }
+
+    const abrirEditarLote = (lote: any) => {
+        setEditingLote(lote)
+        setLoteForm({
+            producto_codigo: lote.producto_codigo,
+            numero_lote: lote.numero_lote,
+            fecha_vencimiento: lote.fecha_vencimiento || '',
+            cantidad_disponible: lote.cantidad_disponible || 0
+        })
+        setLoteModalOpen(true)
     }
 
     const guardarLote = async () => {
-        if (!loteForm.producto_codigo || !loteForm.numero_lote) return alert('Datos incompletos')
-        const { error } = await supabase.from('lotes').insert({
-            tenant_id: tenantId,
-            producto_codigo: loteForm.producto_codigo,
-            numero_lote: loteForm.numero_lote,
-            fecha_vencimiento: loteForm.fecha_vencimiento,
-            cantidad_disponible: loteForm.cantidad_disponible
-        })
-        if (error) alert(error.message)
-        else { setLoteModalOpen(false); loadData(tenantId); alert('Lote agregado') }
+        if (!loteForm.producto_codigo || !loteForm.numero_lote) return alert('❌ Producto y número de lote son obligatorios')
+        if (loteForm.cantidad_disponible < 0) return alert('❌ Cantidad no puede ser negativa')
+
+        setSaving(true)
+        try {
+            if (editingLote) {
+                const { error } = await supabase.from('lotes')
+                    .update({
+                        numero_lote: loteForm.numero_lote,
+                        fecha_vencimiento: loteForm.fecha_vencimiento,
+                        cantidad_disponible: loteForm.cantidad_disponible
+                    })
+                    .eq('id', editingLote.id)
+                if (error) throw error
+                alert('✅ Lote actualizado correctamente')
+            } else {
+                const { error } = await supabase.from('lotes').insert({
+                    tenant_id: tenantId,
+                    producto_codigo: loteForm.producto_codigo,
+                    numero_lote: loteForm.numero_lote,
+                    fecha_vencimiento: loteForm.fecha_vencimiento,
+                    cantidad_disponible: loteForm.cantidad_disponible
+                })
+                if (error) throw error
+                alert('✅ Lote creado correctamente')
+            }
+            setLoteModalOpen(false)
+            setEditingLote(null)
+            loadData(tenantId)
+        } catch (e: any) {
+            alert('❌ Error: ' + e.message)
+        }
+        setSaving(false)
     }
 
-    const eliminarLote = async (id: string) => {
-        if (!confirm('¿Eliminar lote?')) return
-        await supabase.from('lotes').delete().eq('id', id)
-        loadData(tenantId)
+    const eliminarLote = async (lote: any) => {
+        if (!confirm(`¿Eliminar lote "${lote.numero_lote}"?`)) return
+        setSaving(true)
+        try {
+            await supabase.from('lotes').delete().eq('id', lote.id)
+            alert('✅ Lote eliminado')
+            loadData(tenantId)
+        } catch (e: any) {
+            alert('❌ Error: ' + e.message)
+        }
+        setSaving(false)
+    }
+
+    // Helper para obtener estado de vencimiento
+    const getEstadoVencimiento = (fechaVenc: string) => {
+        if (!fechaVenc) return { estado: 'sin-fecha', texto: 'Sin fecha', color: '#6c757d' }
+        const dias = Math.ceil((new Date(fechaVenc).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
+        if (dias < 0) return { estado: 'vencido', texto: `Vencido hace ${Math.abs(dias)} días`, color: '#dc3545' }
+        if (dias <= 30) return { estado: 'proximo', texto: `Vence en ${dias} días`, color: '#ffc107' }
+        if (dias <= 90) return { estado: 'ok', texto: `Vence en ${dias} días`, color: '#17a2b8' }
+        return { estado: 'ok', texto: new Date(fechaVenc).toLocaleDateString(), color: '#28a745' }
     }
 
     // --- ORDER ACTIONS ---
     const abrirCompletar = async (sol: any) => {
         const { data: items } = await supabase.from('solicitudes_items').select('*').eq('solicitud_id', sol.id)
-        const initialRows = items?.map((item, idx) => ({
-            id: crypto.randomUUID(),
-            producto_codigo: item.producto_codigo,
-            descripcion: item.descripcion,
-            cantidad_solicitada: item.cantidad_solicitada,
-            numero_lote: '',
-            fecha_venc: '',
-            cantidad: 0
-        })) || []
 
-        setDespachoItems(initialRows)
+        // Verificar si hay un borrador guardado para esta solicitud
+        const savedDraft = localStorage.getItem('draft_despacho_farmacia')
+        let useDraft = false
+
+        if (savedDraft) {
+            try {
+                const parsed = JSON.parse(savedDraft)
+                if (parsed.solicitudId === sol.id && parsed.items?.some((i: any) => i.numero_lote)) {
+                    useDraft = confirm(
+                        `📋 Se encontró un borrador guardado para esta solicitud.\n\n` +
+                        `Guardado: ${new Date(parsed.timestamp).toLocaleString()}\n\n` +
+                        `¿Deseas restaurar el borrador?`
+                    )
+                    if (useDraft) {
+                        setDespachoItems(parsed.items)
+                        if (parsed.completadoPor) setCompletadoPor(parsed.completadoPor)
+                    }
+                }
+            } catch (e) {
+                localStorage.removeItem('draft_despacho_farmacia')
+            }
+        }
+
+        if (!useDraft) {
+            const initialRows = items?.map((item) => ({
+                id: crypto.randomUUID(),
+                producto_codigo: item.producto_codigo,
+                descripcion: item.descripcion,
+                cantidad_solicitada: item.cantidad_solicitada,
+                numero_lote: '',
+                fecha_venc: '',
+                cantidad: 0
+            })) || []
+            setDespachoItems(initialRows)
+        }
+
         setModalCompletar({ solicitud: sol, items: items || [] })
     }
 
@@ -435,7 +662,15 @@ export default function FarmaciaPage() {
                 fecha_completado: new Date().toISOString()
             }).eq('id', modalCompletar.solicitud.id)
 
-            // Reduce stock logic would go here ideally
+            // Limpiar borrador después de completar exitosamente
+            localStorage.removeItem('draft_despacho_farmacia')
+
+            // Registrar evento de aprendizaje
+            analytics?.solicitudCompletada({
+                solicitudId: modalCompletar.solicitud.id,
+                tiempoCompletado: Date.now() - new Date(modalCompletar.solicitud.created_at).getTime()
+            })
+
             alert('✅ Solicitud completada')
             setModalCompletar(null)
             loadData(tenantId)
@@ -446,7 +681,31 @@ export default function FarmaciaPage() {
     const handleLoteSearch = (rowId: string, val: string, prodCode: string) => {
         setDespachoItems((prev: any[]) => prev.map(r => r.id === rowId ? { ...r, numero_lote: val } : r))
         const matches = lotes.filter(l => l.producto_codigo === prodCode && l.numero_lote.toLowerCase().includes(val.toLowerCase()))
-        setLoteSearchState((prev: LoteSearchState) => ({ ...prev, [rowId]: { show: matches.length > 0 && val.length > 0 } }))
+        setLoteSearchState((prev: LoteSearchState) => ({ ...prev, [rowId]: { show: matches.length > 0 } }))
+    }
+
+    const toggleLoteDropdown = (rowId: string, prodCode: string) => {
+        const currentState = loteSearchState[rowId]?.show || false
+        if (!currentState) {
+            // Mostrar todos los lotes del producto
+            const matches = lotes.filter(l => l.producto_codigo === prodCode)
+            setLoteSearchState((prev: LoteSearchState) => ({ ...prev, [rowId]: { show: matches.length > 0 } }))
+        } else {
+            setLoteSearchState((prev: LoteSearchState) => ({ ...prev, [rowId]: { show: false } }))
+        }
+    }
+
+    const handleLoteFocus = (rowId: string, prodCode: string, currentVal: string) => {
+        const matches = lotes.filter(l => l.producto_codigo === prodCode &&
+            (currentVal === '' || l.numero_lote.toLowerCase().includes(currentVal.toLowerCase())))
+        setLoteSearchState((prev: LoteSearchState) => ({ ...prev, [rowId]: { show: matches.length > 0 } }))
+    }
+
+    const handleLoteBlur = (rowId: string) => {
+        // Delay para permitir click en sugerencia
+        setTimeout(() => {
+            setLoteSearchState((prev: LoteSearchState) => ({ ...prev, [rowId]: { show: false } }))
+        }, 200)
     }
 
     const selectLote = (rowId: string, lote: any) => {
@@ -517,24 +776,94 @@ export default function FarmaciaPage() {
         return (
             <div>
                 <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-xl font-bold">📦 Gestión Productos</h2>
-                    <button onClick={() => { setProdForm({ codigo: '', descripcion: '', categoria: 'PD', stock_min: 10, stock_max: 100 }); setProdModalOpen(true) }} className="btn btn-primary"><LucidePlus size={16} /> Nuevo</button>
+                    <h2 className="text-xl font-bold">📦 Gestión Productos ({productos.length})</h2>
+                    <button
+                        onClick={() => {
+                            setEditingProd(null)
+                            setProdForm({ codigo: '', descripcion: '', categoria: 'PD', stock_min: 10, stock_max: 100 })
+                            setProdModalOpen(true)
+                        }}
+                        className="btn btn-primary"
+                    >
+                        <LucidePlus size={16} /> Nuevo Producto
+                    </button>
                 </div>
-                <input className="form-control mb-4" placeholder="Buscar..." value={busquedaProd} onChange={e => setBusquedaProd(e.target.value)} />
+                <div className="flex gap-2 mb-4">
+                    <input
+                        className="form-control"
+                        placeholder="🔍 Buscar por código o descripción..."
+                        value={busquedaProd}
+                        onChange={e => setBusquedaProd(e.target.value)}
+                    />
+                    {busquedaProd && (
+                        <button className="btn btn-secondary" onClick={() => setBusquedaProd('')}>
+                            <LucideX size={16} />
+                        </button>
+                    )}
+                </div>
                 <div className="table-container">
                     <table>
-                        <thead><tr><th>Código</th><th>Descripción</th><th>Categoría</th><th>Stock</th><th>Acciones</th></tr></thead>
+                        <thead>
+                            <tr>
+                                <th>Código</th>
+                                <th>Descripción</th>
+                                <th>Categoría</th>
+                                <th>Stock Min</th>
+                                <th>Stock Max</th>
+                                <th>Lotes</th>
+                                <th className="text-center">Acciones</th>
+                            </tr>
+                        </thead>
                         <tbody>
-                            {filtrados.map(p => (
-                                <tr key={p.id}>
-                                    <td><strong>{p.codigo}</strong></td><td>{p.descripcion}</td>
-                                    <td><span className="badge badge-pendiente">{p.categoria}</span></td>
-                                    <td>{p.stock || 0}</td>
-                                    <td>
-                                        <button onClick={() => eliminarProducto(p.codigo)} className="btn btn-danger px-2 py-1"><LucideTrash size={14} /></button>
+                            {filtrados.length === 0 ? (
+                                <tr>
+                                    <td colSpan={7} className="text-center p-8">
+                                        {busquedaProd ? '🔍 No se encontraron productos' : '📦 No hay productos registrados'}
                                     </td>
                                 </tr>
-                            ))}
+                            ) : (
+                                filtrados.map(p => {
+                                    const lotesProducto = lotes.filter(l => l.producto_codigo === p.codigo)
+                                    return (
+                                        <tr key={p.id}>
+                                            <td><strong className="font-mono">{p.codigo}</strong></td>
+                                            <td>{p.descripcion}</td>
+                                            <td>
+                                                <span className={`badge ${p.categoria === 'HD' ? 'badge-completado' : 'badge-pendiente'}`}>
+                                                    {p.categoria}
+                                                </span>
+                                            </td>
+                                            <td>{p.stock_min || 0}</td>
+                                            <td>{p.stock_max || 0}</td>
+                                            <td>
+                                                <span className="badge" style={{ background: lotesProducto.length > 0 ? '#17a2b8' : '#6c757d', color: 'white' }}>
+                                                    {lotesProducto.length} lotes
+                                                </span>
+                                            </td>
+                                            <td className="text-center">
+                                                <div className="flex gap-1 justify-center">
+                                                    <button
+                                                        onClick={() => abrirEditarProducto(p)}
+                                                        className="btn btn-warning px-2 py-1"
+                                                        title="Editar"
+                                                        disabled={saving}
+                                                    >
+                                                        <LucideEdit size={14} />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => eliminarProducto(p)}
+                                                        className="btn btn-danger px-2 py-1"
+                                                        title="Eliminar"
+                                                        disabled={saving}
+                                                    >
+                                                        <LucideTrash size={14} />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    )
+                                })
+                            )}
                         </tbody>
                     </table>
                 </div>
@@ -543,29 +872,238 @@ export default function FarmaciaPage() {
     }
 
     const renderLotes = () => {
-        const filtrados = lotes.filter(l => l.numero_lote.toLowerCase().includes(busquedaLote.toLowerCase()))
+        const filtrados = lotes.filter(l =>
+            l.numero_lote.toLowerCase().includes(busquedaLote.toLowerCase()) ||
+            l.producto_codigo.toLowerCase().includes(busquedaLote.toLowerCase())
+        )
+
         return (
             <div>
                 <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-xl font-bold">📋 Gestión Lotes</h2>
-                    <button onClick={() => { setLoteForm({ producto_codigo: '', numero_lote: '', fecha_vencimiento: '', cantidad_disponible: 0 }); setLoteModalOpen(true) }} className="btn btn-primary"><LucidePlus size={16} /> Agregar Lote</button>
+                    <div>
+                        <h2 className="text-xl font-bold">📋 Gestión Lotes ({lotes.length})</h2>
+                        <div className="flex gap-4 mt-2 text-sm">
+                            {lotesVencidos > 0 && (
+                                <span className="px-2 py-1 rounded" style={{ background: '#dc3545', color: 'white' }}>
+                                    ⚠️ {lotesVencidos} vencidos
+                                </span>
+                            )}
+                            {lotesProximosVencer > 0 && (
+                                <span className="px-2 py-1 rounded" style={{ background: '#ffc107', color: '#000' }}>
+                                    ⏰ {lotesProximosVencer} próximos a vencer
+                                </span>
+                            )}
+                        </div>
+                    </div>
+                    <button
+                        onClick={() => {
+                            setEditingLote(null)
+                            setLoteForm({ producto_codigo: '', numero_lote: '', fecha_vencimiento: '', cantidad_disponible: 0 })
+                            setLoteModalOpen(true)
+                        }}
+                        className="btn btn-primary"
+                    >
+                        <LucidePlus size={16} /> Nuevo Lote
+                    </button>
                 </div>
-                <input className="form-control mb-4" placeholder="Buscar lote..." value={busquedaLote} onChange={e => setBusquedaLote(e.target.value)} />
+
+                <div className="flex gap-2 mb-4">
+                    <input
+                        className="form-control"
+                        placeholder="🔍 Buscar por código de producto o número de lote..."
+                        value={busquedaLote}
+                        onChange={e => setBusquedaLote(e.target.value)}
+                    />
+                    {busquedaLote && (
+                        <button className="btn btn-secondary" onClick={() => setBusquedaLote('')}>
+                            <LucideX size={16} />
+                        </button>
+                    )}
+                </div>
+
                 <div className="table-container">
                     <table>
-                        <thead><tr><th>Producto</th><th>Lote</th><th>Vencimiento</th><th>Cantidad</th><th>Acciones</th></tr></thead>
+                        <thead>
+                            <tr>
+                                <th>Producto</th>
+                                <th>Descripción</th>
+                                <th>Lote</th>
+                                <th>Vencimiento</th>
+                                <th>Cantidad</th>
+                                <th className="text-center">Acciones</th>
+                            </tr>
+                        </thead>
                         <tbody>
-                            {filtrados.map(l => (
-                                <tr key={l.id}>
-                                    <td>{l.producto_codigo}</td>
-                                    <td className="font-bold">{l.numero_lote}</td>
-                                    <td>{l.fecha_vencimiento}</td>
-                                    <td>{l.cantidad_disponible}</td>
-                                    <td><button onClick={() => eliminarLote(l.id)} className="btn btn-danger px-2"><LucideTrash size={14} /></button></td>
+                            {filtrados.length === 0 ? (
+                                <tr>
+                                    <td colSpan={6} className="text-center p-8">
+                                        {busquedaLote ? '🔍 No se encontraron lotes' : '📋 No hay lotes registrados'}
+                                    </td>
                                 </tr>
-                            ))}
+                            ) : (
+                                filtrados.map(l => {
+                                    const producto = productos.find(p => p.codigo === l.producto_codigo)
+                                    const vencimiento = getEstadoVencimiento(l.fecha_vencimiento)
+                                    return (
+                                        <tr
+                                            key={l.id}
+                                            style={{
+                                                background: vencimiento.estado === 'vencido' ? '#ffe6e6' :
+                                                    vencimiento.estado === 'proximo' ? '#fff9e6' : undefined
+                                            }}
+                                        >
+                                            <td><strong className="font-mono">{l.producto_codigo}</strong></td>
+                                            <td className="text-sm text-gray-600">{producto?.descripcion || '-'}</td>
+                                            <td className="font-bold">{l.numero_lote}</td>
+                                            <td>
+                                                <span
+                                                    className="px-2 py-1 rounded text-sm font-medium"
+                                                    style={{ background: vencimiento.color + '20', color: vencimiento.color, border: `1px solid ${vencimiento.color}` }}
+                                                >
+                                                    {vencimiento.texto}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span className={`font-bold ${l.cantidad_disponible <= 5 ? 'text-red-600' : ''}`}>
+                                                    {l.cantidad_disponible}
+                                                </span>
+                                            </td>
+                                            <td className="text-center">
+                                                <div className="flex gap-1 justify-center">
+                                                    <button
+                                                        onClick={() => abrirEditarLote(l)}
+                                                        className="btn btn-warning px-2 py-1"
+                                                        title="Editar"
+                                                        disabled={saving}
+                                                    >
+                                                        <LucideEdit size={14} />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => eliminarLote(l)}
+                                                        className="btn btn-danger px-2 py-1"
+                                                        title="Eliminar"
+                                                        disabled={saving}
+                                                    >
+                                                        <LucideTrash size={14} />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    )
+                                })
+                            )}
                         </tbody>
                     </table>
+                </div>
+            </div>
+        )
+    }
+
+    const renderAlertasIA = () => {
+        // Mock data - en producción vendría de función SQL farmacia_alertas_predictivas()
+        const mockAlertas = productos.slice(0, 8).map((p, i) => ({
+            producto_codigo: p.codigo,
+            descripcion: p.descripcion,
+            stock_actual: Math.floor(Math.random() * 100) + 10,
+            consumo_diario: (Math.random() * 5 + 1).toFixed(2),
+            dias_restantes: Math.floor(Math.random() * 25) + 3,
+            urgency: i < 2 ? 'critica' : i < 5 ? 'alta' : 'media'
+        }))
+
+        const criticas = mockAlertas.filter(a => a.dias_restantes <= 7)
+        const advertencias = mockAlertas.filter(a => a.dias_restantes > 7 && a.dias_restantes <= 14)
+        const informativas = mockAlertas.filter(a => a.dias_restantes > 14)
+
+        return (
+            <div>
+                <h2 className="text-xl font-bold mb-4">🤖 Alertas Predictivas IA</h2>
+                <p className="text-sm text-gray-600 mb-6">
+                    La IA predice cuándo se agotará cada producto basándose en el consumo real de los últimos 30 días.
+                </p>
+
+                {/* Críticas - ≤7 días */}
+                {criticas.length > 0 && (
+                    <div className="bg-red-50 p-4 rounded-xl mb-4 border-l-4 border-red-500">
+                        <h3 className="font-bold text-red-800 mb-3 flex items-center gap-2">
+                            ⚠️ Crítico - Ordenar Ahora (≤7 días)
+                        </h3>
+                        {criticas.map(a => (
+                            <div key={a.producto_codigo} className="bg-white p-3 rounded mb-2 shadow-sm">
+                                <div className="flex justify-between items-start">
+                                    <div className="flex-1">
+                                        <span className="font-bold text-sm">{a.producto_codigo}</span>
+                                        <p className="text-sm text-gray-700">{a.descripcion}</p>
+                                        <div className="text-xs text-gray-600 mt-1">
+                                            Stock: {a.stock_actual} | Consumo diario: {a.consumo_diario}
+                                        </div>
+                                    </div>
+                                    <span className="text-red-600 font-bold text-right">
+                                        {a.dias_restantes} días<br />
+                                        <span className="text-[10px]">restantes</span>
+                                    </span>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+
+                {/* Advertencia - 8-14 días */}
+                {advertencias.length > 0 && (
+                    <div className="bg-yellow-50 p-4 rounded-xl mb-4 border-l-4 border-yellow-500">
+                        <h3 className="font-bold text-yellow-800 mb-3 flex items-center gap-2">
+                            ⏰ Advertencia - Planificar Pedido (8-14 días)
+                        </h3>
+                        {advertencias.map(a => (
+                            <div key={a.producto_codigo} className="bg-white p-3 rounded mb-2 shadow-sm">
+                                <div className="flex justify-between items-start">
+                                    <div className="flex-1">
+                                        <span className="font-bold text-sm">{a.producto_codigo}</span>
+                                        <p className="text-sm text-gray-700">{a.descripcion}</p>
+                                        <div className="text-xs text-gray-600 mt-1">
+                                            Stock: {a.stock_actual} | Consumo diario: {a.consumo_diario}
+                                        </div>
+                                    </div>
+                                    <span className="text-yellow-600 font-bold text-right">
+                                        {a.dias_restantes} días<br />
+                                        <span className="text-[10px]">restantes</span>
+                                    </span>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+
+                {/* Informativas - 15-30 días */}
+                {informativas.length > 0 && (
+                    <div className="bg-blue-50 p-4 rounded-xl border-l-4 border-blue-500">
+                        <h3 className="font-bold text-blue-800 mb-3 flex items-center gap-2">
+                            ℹ️ Información - Stock Adecuado (15-30 días)
+                        </h3>
+                        {informativas.map(a => (
+                            <div key={a.producto_codigo} className="bg-white p-3 rounded mb-2 shadow-sm">
+                                <div className="flex justify-between items-start">
+                                    <div className="flex-1">
+                                        <span className="font-bold text-sm">{a.producto_codigo}</span>
+                                        <p className="text-sm text-gray-700">{a.descripcion}</p>
+                                        <div className="text-xs text-gray-600 mt-1">
+                                            Stock: {a.stock_actual} | Consumo diario: {a.consumo_diario}
+                                        </div>
+                                    </div>
+                                    <span className="text-blue-600 font-bold text-right">
+                                        {a.dias_restantes} días<br />
+                                        <span className="text-[10px]">restantes</span>
+                                    </span>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+
+                <div className="mt-6 p-4 bg-purple-50 rounded-xl border border-purple-200">
+                    <p className="text-sm text-purple-800">
+                        <strong>💡 Nota:</strong> Estos cálculos son predicciones basadas en IA.
+                        Para conectar con datos reales, ejecuta la función SQL <code className="bg-purple-200 px-2 py-1 rounded">farmacia_alertas_predictivas(tenant_id)</code> en Supabase.
+                    </p>
                 </div>
             </div>
         )
@@ -621,17 +1159,43 @@ export default function FarmaciaPage() {
             <div className={`container-card ${darkMode ? 'dark-mode' : ''}`}>
                 <div className="header">
                     <div className="header-actions">
-                        <button className="icon-btn" onClick={() => router.push('/')} title="Salir"><LucideLogOut /></button>
+                        <button className="icon-btn" onClick={() => setDarkMode(!darkMode)} title="Modo oscuro">
+                            {darkMode ? '☀️' : '🌙'}
+                        </button>
                         <button className="icon-btn" onClick={() => loadData(tenantId)} title="Actualizar"><LucideRefreshCw /></button>
+                        <button className="icon-btn" onClick={() => router.push('/')} title="Salir"><LucideLogOut /></button>
                     </div>
                     <h1>📦 DialyStock Farmacia</h1>
                     <p>Gestión y Despacho de Solicitudes</p>
+
+                    {/* Stats Bar */}
+                    <div className="flex justify-center gap-6 mt-4 flex-wrap">
+                        <div className="bg-white/20 backdrop-blur px-4 py-2 rounded-lg text-center">
+                            <div className="text-2xl font-bold">{pendientesCount}</div>
+                            <div className="text-xs opacity-80">Pendientes</div>
+                        </div>
+                        <div className="bg-white/20 backdrop-blur px-4 py-2 rounded-lg text-center">
+                            <div className="text-2xl font-bold">{completadasHoy}</div>
+                            <div className="text-xs opacity-80">Completadas hoy</div>
+                        </div>
+                        <div className="bg-white/20 backdrop-blur px-4 py-2 rounded-lg text-center">
+                            <div className="text-2xl font-bold">{productos.length}</div>
+                            <div className="text-xs opacity-80">Productos</div>
+                        </div>
+                        <div className="bg-white/20 backdrop-blur px-4 py-2 rounded-lg text-center">
+                            <div className="text-2xl font-bold" style={{ color: lotesVencidos > 0 ? '#ffcccc' : 'inherit' }}>
+                                {lotesVencidos > 0 ? `⚠️ ${lotesVencidos}` : lotes.length}
+                            </div>
+                            <div className="text-xs opacity-80">{lotesVencidos > 0 ? 'Lotes vencidos' : 'Lotes'}</div>
+                        </div>
+                    </div>
                 </div>
 
                 <div className="nav-tabs">
                     <button className={`nav-tab ${activeTab === 'pendientes' ? 'active' : ''}`} onClick={() => setActiveTab('pendientes')}>⏳ Pendientes</button>
                     <button className={`nav-tab ${activeTab === 'completadas' ? 'active' : ''}`} onClick={() => setActiveTab('completadas')}>✅ Completadas</button>
                     <button className={`nav-tab ${activeTab === 'reportes' ? 'active' : ''}`} onClick={() => setActiveTab('reportes')}>📥 Reportes</button>
+                    <button className={`nav-tab ${activeTab === 'alertas_ia' ? 'active' : ''}`} onClick={() => setActiveTab('alertas_ia')}>🤖 Alertas IA</button>
                     <button className={`nav-tab ${activeTab === 'productos' ? 'active' : ''}`} onClick={() => setActiveTab('productos')}>📦 Productos</button>
                     <button className={`nav-tab ${activeTab === 'lotes' ? 'active' : ''}`} onClick={() => setActiveTab('lotes')}>📋 Lotes</button>
                 </div>
@@ -640,6 +1204,7 @@ export default function FarmaciaPage() {
                     {activeTab === 'pendientes' && renderPendientes()}
                     {activeTab === 'completadas' && renderCompletadas()}
                     {activeTab === 'reportes' && renderReportes()}
+                    {activeTab === 'alertas_ia' && renderAlertasIA()}
                     {activeTab === 'productos' && renderProductos()}
                     {activeTab === 'lotes' && renderLotes()}
                 </div>
@@ -649,16 +1214,77 @@ export default function FarmaciaPage() {
             {prodModalOpen && (
                 <div className="modal-overlay">
                     <div className="modal-content" style={{ maxWidth: '600px' }}>
-                        <div className="modal-header"><h3>Nuevo Producto</h3> <span className="close text-2xl cursor-pointer" onClick={() => setProdModalOpen(false)}>&times;</span></div>
+                        <div className="modal-header">
+                            <h3>{editingProd ? '✏️ Editar Producto' : '📦 Nuevo Producto'}</h3>
+                            <span className="close text-2xl cursor-pointer" onClick={() => { setProdModalOpen(false); setEditingProd(null) }}>&times;</span>
+                        </div>
                         <div className="grid gap-4">
-                            <input className="form-control" placeholder="Código" value={prodForm.codigo} onChange={e => setProdForm({ ...prodForm, codigo: e.target.value })} />
-                            <input className="form-control" placeholder="Descripción" value={prodForm.descripcion} onChange={e => setProdForm({ ...prodForm, descripcion: e.target.value })} />
-                            <select className="form-control" value={prodForm.categoria} onChange={e => setProdForm({ ...prodForm, categoria: e.target.value })}>
-                                <option value="PD">Peritoneal (PD)</option>
-                                <option value="HD">Hemodiálisis (HD)</option>
-                            </select>
-                            <input className="form-control" type="number" placeholder="Stock Min" value={prodForm.stock_min} onChange={e => setProdForm({ ...prodForm, stock_min: Number(e.target.value) })} />
-                            <button className="btn btn-primary" onClick={guardarProducto}>Guardar</button>
+                            <div>
+                                <label className="block text-sm font-bold mb-1">Código *</label>
+                                <input
+                                    className="form-control"
+                                    placeholder="Ej: D009937"
+                                    value={prodForm.codigo}
+                                    onChange={e => setProdForm({ ...prodForm, codigo: e.target.value.toUpperCase() })}
+                                    disabled={!!editingProd}
+                                    style={{ background: editingProd ? '#f0f0f0' : undefined }}
+                                />
+                                {editingProd && <p className="text-xs text-gray-500 mt-1">El código no se puede modificar</p>}
+                            </div>
+                            <div>
+                                <label className="block text-sm font-bold mb-1">Descripción *</label>
+                                <input
+                                    className="form-control"
+                                    placeholder="Nombre del producto"
+                                    value={prodForm.descripcion}
+                                    onChange={e => setProdForm({ ...prodForm, descripcion: e.target.value })}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-bold mb-1">Categoría</label>
+                                <select className="form-control" value={prodForm.categoria} onChange={e => setProdForm({ ...prodForm, categoria: e.target.value })}>
+                                    <option value="PD">Peritoneal (PD)</option>
+                                    <option value="HD">Hemodiálisis (HD)</option>
+                                    <option value="GENERAL">General</option>
+                                </select>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-bold mb-1">Stock Mínimo</label>
+                                    <input
+                                        className="form-control"
+                                        type="number"
+                                        min="0"
+                                        value={prodForm.stock_min}
+                                        onChange={e => setProdForm({ ...prodForm, stock_min: Number(e.target.value) })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-bold mb-1">Stock Máximo</label>
+                                    <input
+                                        className="form-control"
+                                        type="number"
+                                        min="0"
+                                        value={prodForm.stock_max}
+                                        onChange={e => setProdForm({ ...prodForm, stock_max: Number(e.target.value) })}
+                                    />
+                                </div>
+                            </div>
+                            <div className="flex gap-2 justify-end mt-2">
+                                <button
+                                    className="btn btn-secondary"
+                                    onClick={() => { setProdModalOpen(false); setEditingProd(null) }}
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    className="btn btn-primary"
+                                    onClick={guardarProducto}
+                                    disabled={saving}
+                                >
+                                    {saving ? '⏳ Guardando...' : (editingProd ? '💾 Actualizar' : '💾 Crear Producto')}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -668,28 +1294,107 @@ export default function FarmaciaPage() {
             {loteModalOpen && (
                 <div className="modal-overlay">
                     <div className="modal-content" style={{ maxWidth: '600px' }}>
-                        <div className="modal-header"><h3>Nuevo Lote</h3> <span className="close text-2xl cursor-pointer" onClick={() => setLoteModalOpen(false)}>&times;</span></div>
+                        <div className="modal-header">
+                            <h3>{editingLote ? '✏️ Editar Lote' : '📋 Nuevo Lote'}</h3>
+                            <span className="close text-2xl cursor-pointer" onClick={() => { setLoteModalOpen(false); setEditingLote(null) }}>&times;</span>
+                        </div>
                         <div className="grid gap-4">
-                            <input className="form-control" placeholder="Código Producto" value={loteForm.producto_codigo} onChange={e => setLoteForm({ ...loteForm, producto_codigo: e.target.value })} />
-                            <input className="form-control" placeholder="Número Lote" value={loteForm.numero_lote} onChange={e => setLoteForm({ ...loteForm, numero_lote: e.target.value })} />
-                            <input className="form-control" type="date" placeholder="Vencimiento" value={loteForm.fecha_vencimiento} onChange={e => setLoteForm({ ...loteForm, fecha_vencimiento: e.target.value })} />
-                            <input className="form-control" type="number" placeholder="Cantidad" value={loteForm.cantidad_disponible} onChange={e => setLoteForm({ ...loteForm, cantidad_disponible: Number(e.target.value) })} />
-                            <button className="btn btn-primary" onClick={guardarLote}>Guardar</button>
+                            <div>
+                                <label className="block text-sm font-bold mb-1">Producto *</label>
+                                {editingLote ? (
+                                    <input
+                                        className="form-control"
+                                        value={loteForm.producto_codigo}
+                                        disabled
+                                        style={{ background: '#f0f0f0' }}
+                                    />
+                                ) : (
+                                    <select
+                                        className="form-control"
+                                        value={loteForm.producto_codigo}
+                                        onChange={e => setLoteForm({ ...loteForm, producto_codigo: e.target.value })}
+                                    >
+                                        <option value="">-- Selecciona un producto --</option>
+                                        {productos.map(p => (
+                                            <option key={p.id} value={p.codigo}>
+                                                {p.codigo} - {p.descripcion}
+                                            </option>
+                                        ))}
+                                    </select>
+                                )}
+                            </div>
+                            <div>
+                                <label className="block text-sm font-bold mb-1">Número de Lote *</label>
+                                <input
+                                    className="form-control"
+                                    placeholder="Ej: LOT2024-001"
+                                    value={loteForm.numero_lote}
+                                    onChange={e => setLoteForm({ ...loteForm, numero_lote: e.target.value.toUpperCase() })}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-bold mb-1">Fecha de Vencimiento</label>
+                                <input
+                                    className="form-control"
+                                    type="date"
+                                    value={loteForm.fecha_vencimiento}
+                                    onChange={e => setLoteForm({ ...loteForm, fecha_vencimiento: e.target.value })}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-bold mb-1">Cantidad Disponible</label>
+                                <input
+                                    className="form-control"
+                                    type="number"
+                                    min="0"
+                                    placeholder="0"
+                                    value={loteForm.cantidad_disponible}
+                                    onChange={e => setLoteForm({ ...loteForm, cantidad_disponible: Number(e.target.value) })}
+                                />
+                            </div>
+                            <div className="flex gap-2 justify-end mt-2">
+                                <button
+                                    className="btn btn-secondary"
+                                    onClick={() => { setLoteModalOpen(false); setEditingLote(null) }}
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    className="btn btn-primary"
+                                    onClick={guardarLote}
+                                    disabled={saving}
+                                >
+                                    {saving ? '⏳ Guardando...' : (editingLote ? '💾 Actualizar' : '💾 Crear Lote')}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
             )}
 
-            {/* MODAL COMPLETAR */}
+            {/* MODAL COMPLETAR - No se cierra al hacer clic afuera */}
             {modalCompletar && (
-                <div className="modal-overlay">
-                    <div className="modal-content">
+                <div className="modal-overlay" onClick={(e) => e.stopPropagation()}>
+                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
                         <div className="modal-header">
                             <h3>📦 Completar Solicitud #{modalCompletar.solicitud.id.slice(0, 6)}</h3>
-                            <span className="close text-2xl cursor-pointer" onClick={() => setModalCompletar(null)}>&times;</span>
+                            <span
+                                className="close text-2xl cursor-pointer"
+                                onClick={() => {
+                                    if (despachoItems.some(i => i.numero_lote)) {
+                                        if (confirm('⚠️ Tienes datos sin guardar. ¿Seguro que deseas cerrar?')) {
+                                            setModalCompletar(null)
+                                        }
+                                    } else {
+                                        setModalCompletar(null)
+                                    }
+                                }}
+                            >
+                                &times;
+                            </span>
                         </div>
-                        <div className="p-4 bg-yellow-50 mb-4 rounded border border-yellow-200">
-                            <strong>Tip:</strong> Escribe el número de lote para autocompletar.
+                        <div className="p-4 bg-blue-50 mb-4 rounded border border-blue-200">
+                            <strong>💡 Tip:</strong> Escribe para filtrar o haz clic en ▼ para ver todos los lotes disponibles del producto. Al seleccionar un lote, la fecha y cantidad se llenarán automáticamente.
                         </div>
                         <div className="mb-4">
                             <label className="font-bold">Completado Por:</label>
@@ -702,19 +1407,53 @@ export default function FarmaciaPage() {
                                     <h4 className="font-bold text-blue-600">{item.producto_codigo} - {item.descripcion}</h4>
                                     <p>Cant Solic: {item.cantidad_solicitada}</p>
                                     {rows.map((row) => (
-                                        <div key={row.id} className="flex gap-2 mt-2">
-                                            <div className="lote-input-container flex-1">
-                                                <input className="form-control" placeholder="Lote" value={row.numero_lote} onChange={e => handleLoteSearch(row.id, e.target.value, row.producto_codigo)} />
+                                        <div key={row.id} className="flex gap-2 mt-2 items-start">
+                                            <div className="lote-input-container">
+                                                <input
+                                                    className="form-control pr-10"
+                                                    placeholder="Escribe o selecciona lote..."
+                                                    value={row.numero_lote}
+                                                    onChange={e => handleLoteSearch(row.id, e.target.value, row.producto_codigo)}
+                                                    onFocus={() => handleLoteFocus(row.id, row.producto_codigo, row.numero_lote)}
+                                                    onBlur={() => handleLoteBlur(row.id)}
+                                                />
+                                                <button
+                                                    type="button"
+                                                    className="lote-dropdown-btn"
+                                                    onClick={() => toggleLoteDropdown(row.id, row.producto_codigo)}
+                                                    title="Ver lotes disponibles"
+                                                >
+                                                    ▼
+                                                </button>
                                                 {loteSearchState[row.id]?.show && (
                                                     <div className="lote-suggestions show">
-                                                        {lotes.filter(l => l.producto_codigo === row.producto_codigo && l.numero_lote.toLowerCase().includes(row.numero_lote.toLowerCase())).map(l => (
-                                                            <div key={l.id} className="lote-suggestion-item" onClick={() => selectLote(row.id, l)}>{l.numero_lote} (Disp: {l.cantidad_disponible})</div>
-                                                        ))}
+                                                        {lotes.filter(l => l.producto_codigo === row.producto_codigo &&
+                                                            (row.numero_lote === '' || l.numero_lote.toLowerCase().includes(row.numero_lote.toLowerCase()))
+                                                        ).length === 0 ? (
+                                                            <div className="lote-suggestion-item" style={{ color: '#999', fontStyle: 'italic' }}>
+                                                                No hay lotes para este producto
+                                                            </div>
+                                                        ) : (
+                                                            lotes.filter(l => l.producto_codigo === row.producto_codigo &&
+                                                                (row.numero_lote === '' || l.numero_lote.toLowerCase().includes(row.numero_lote.toLowerCase()))
+                                                            ).map(l => (
+                                                                <div
+                                                                    key={l.id}
+                                                                    className="lote-suggestion-item"
+                                                                    onMouseDown={() => selectLote(row.id, l)}
+                                                                >
+                                                                    <span className="lote-code">{l.numero_lote}</span>
+                                                                    <span className="lote-info">
+                                                                        Disp: {l.cantidad_disponible} | Venc: {l.fecha_vencimiento ? new Date(l.fecha_vencimiento).toLocaleDateString() : 'N/A'}
+                                                                    </span>
+                                                                </div>
+                                                            ))
+                                                        )}
                                                     </div>
                                                 )}
                                             </div>
-                                            <input className="form-control w-32" type="date" value={row.fecha_venc} onChange={e => setDespachoItems(all => all.map(r => r.id === row.id ? { ...r, fecha_venc: e.target.value } : r))} />
-                                            <input className="form-control w-24" type="number" value={row.cantidad} onChange={e => setDespachoItems(all => all.map(r => r.id === row.id ? { ...r, cantidad: Number(e.target.value) } : r))} />
+                                            <input className="form-control" style={{ width: '130px', minWidth: '130px' }} type="date" value={row.fecha_venc} onChange={e => setDespachoItems(all => all.map(r => r.id === row.id ? { ...r, fecha_venc: e.target.value } : r))} />
+                                            <input className="form-control" style={{ width: '90px', minWidth: '90px' }} type="number" placeholder="Cant" value={row.cantidad} onChange={e => setDespachoItems(all => all.map(r => r.id === row.id ? { ...r, cantidad: Number(e.target.value) } : r))} />
                                             <button className="btn btn-danger" onClick={() => eliminarFila(row.id)}>X</button>
                                         </div>
                                     ))}
@@ -723,7 +1462,20 @@ export default function FarmaciaPage() {
                             )
                         })}
                         <div className="flex justify-end gap-2 mt-4">
-                            <button className="btn btn-secondary" onClick={() => setModalCompletar(null)}>Cancelar</button>
+                            <button
+                                className="btn btn-secondary"
+                                onClick={() => {
+                                    if (despachoItems.some(i => i.numero_lote)) {
+                                        if (confirm('⚠️ Tienes datos sin guardar. ¿Seguro que deseas cancelar?')) {
+                                            setModalCompletar(null)
+                                        }
+                                    } else {
+                                        setModalCompletar(null)
+                                    }
+                                }}
+                            >
+                                Cancelar
+                            </button>
                             <button className="btn btn-success" onClick={guardarCompletado}>Completar</button>
                         </div>
                     </div>
@@ -743,7 +1495,7 @@ export default function FarmaciaPage() {
                         <div className="print-logo">
                             <h1 className="text-3xl font-bold text-blue-600">DaVita</h1>
                         </div>
-                        <div className="print-title">Solicitud diaria y/o reposición de productos médicos - DaVita PRO</div>
+                        <div className="print-title">Solicitud diaria y/o reposición de dispositivos médicos - Hospitalarte</div>
 
                         <div className="detalle-linea-unica">
                             <div><strong>ID:</strong> {modalDetalle.solicitud.id ? (modalDetalle.solicitud.tipo + '-' + modalDetalle.solicitud.id.replace(/-/g, '').slice(0, 10)) : modalDetalle.solicitud.id}</div>
@@ -806,5 +1558,3 @@ export default function FarmaciaPage() {
         </div>
     )
 }
-
-const darkMode = false

@@ -39,3 +39,14 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Supabase sensitive files - NO SUBIR
+supabase/.env
+supabase/config.toml
+supabase/.temp/
+supabase/.branches/
+.supabase/
+
+# Brain artifacts locales
+.gemini/
+C:\Users\madfe\.gemini/

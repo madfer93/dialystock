@@ -22,7 +22,8 @@ import {
   Quote,
   MapPin,
   Phone,
-  Clock
+  Clock,
+  Sparkles
 } from 'lucide-react'
 import { FaWhatsapp, FaFacebook, FaInstagram, FaTiktok } from 'react-icons/fa'
 import Link from 'next/link'
@@ -270,6 +271,13 @@ export default function Home() {
               <ShieldCheck size={12} className="md:w-[14px] md:h-[14px]" />
               NUEVA VERSIÓN 4.0 DISPONIBLE
             </div>
+
+            {/* Price Increase Notice */}
+            <div className="inline-flex items-center gap-2 px-4 md:px-6 py-2 md:py-3 bg-gradient-to-r from-purple-500/20 to-blue-500/20 border border-purple-500/30 rounded-full text-purple-300 text-xs md:text-sm font-bold mb-4 shadow-lg shadow-purple-500/10">
+              <Sparkles size={14} className="md:w-4 md:h-4" />
+              <span>🎁 APROVECHA: Sistema IA Premium GRATIS por 2 meses | Después upgrade a $1.2M/mes</span>
+            </div>
+
             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-8xl font-black text-white tracking-tight mb-6 md:mb-8 leading-[0.95]">
               Gestión Médica <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-blue-600 to-indigo-600">Sin Errores.</span>
