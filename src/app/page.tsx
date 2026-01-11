@@ -64,17 +64,7 @@ export default function Home() {
   const [wompiLinks, setWompiLinks] = useState({ pro: 'https://checkout.wompi.co/l/os2Qr0', ent: 'https://checkout.wompi.co/l/Hwxym7' })
 
   const pricingPlans = [
-    {
-      id: 'starter',
-      name: 'Starter',
-      price: 'Gratis',
-      period: 'por 30 días',
-      desc: 'Ideal para probar la potencia de DialyStock en tu primera sede.',
-      features: ['1 Sede', 'Módulos HD/PD Básicos', 'Trazabilidad de Insumos', 'Soporte vía Ticket'],
-      color: 'from-slate-500 to-slate-700',
-      cta: 'Empezar Prueba',
-      link: '#'
-    },
+
     {
       id: 'pro',
       name: 'Professional',
