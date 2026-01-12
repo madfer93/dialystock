@@ -143,7 +143,8 @@ export default function Home() {
           else if (role === 'farmacia') router.push('/farmacia')
           else if (role === 'jefe_hd') router.push('/jefe-hd')
           else if (role === 'jefe_pd') router.push('/jefe-pd')
-          else router.push('/farmacia') // Default
+          else if (role === 'admin_clinica' || role === 'admin') router.push('/clinica')
+          else router.push('/clinica') // Default más seguro que /farmacia
         }
       }
     }

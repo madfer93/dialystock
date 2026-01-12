@@ -359,8 +359,9 @@ export default function FarmaciaPage() {
             const { data: { user } } = await supabase.auth.getUser()
             if (!user) { router.push('/'); return }
             const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
-            if (!profile || (profile.role || '').toLowerCase().trim() !== 'farmacia') {
-                console.warn('Acceso denegado: Rol insuficiente o perfil no encontrado', profile?.role)
+            const userRole = (profile.role || '').toLowerCase().trim()
+            if (userRole !== 'farmacia' && userRole !== 'admin_clinica' && userRole !== 'admin') {
+                console.warn('Acceso denegado: Rol insuficiente', userRole)
                 router.push('/')
                 return
             }
