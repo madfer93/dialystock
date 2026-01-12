@@ -356,19 +356,33 @@ export default function FarmaciaPage() {
         document.head.appendChild(styleSheet)
 
         const init = async () => {
-            const { data: { user } } = await supabase.auth.getUser()
-            if (!user) { router.push('/'); return }
-            const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
-            const userRole = (profile.role || '').toLowerCase().trim()
-            if (userRole !== 'farmacia' && userRole !== 'admin_clinica' && userRole !== 'admin') {
-                console.warn('Acceso denegado: Rol insuficiente', userRole)
-                router.push('/')
-                return
+            try {
+                const { data: { user } } = await supabase.auth.getUser()
+                if (!user) { router.push('/'); return }
+
+                const { data: profile, error: profileError } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+
+                if (profileError || !profile) {
+                    console.error('Error al cargar perfil:', profileError)
+                    router.push('/')
+                    return
+                }
+
+                const userRole = (profile.role || '').toLowerCase().trim()
+                if (userRole !== 'farmacia' && userRole !== 'admin_clinica' && userRole !== 'admin') {
+                    console.warn('Acceso denegado: Rol insuficiente', userRole)
+                    router.push('/')
+                    return
+                }
+
+                setTenantId(profile.tenant_id)
+                setUserId(user.id)
+                setCompletadoPor(profile.nombre || '')
+                await loadData(profile.tenant_id)
+            } catch (err) {
+                console.error('Error en inicialización:', err)
+                setLoading(false)
             }
-            setTenantId(profile.tenant_id)
-            setUserId(user.id)
-            setCompletadoPor(profile.nombre || '')
-            loadData(profile.tenant_id)
         }
         init()
 
@@ -460,6 +474,7 @@ export default function FarmaciaPage() {
             if (aiRes.error) {
                 console.error('❌ Error Alertas IA:', aiRes.error)
             } else if (aiRes.data) {
+                console.log(`🤖 Alertas IA cargadas: ${aiRes.data.length}`)
                 setAlertasIA(aiRes.data)
             }
         } catch (err) {
