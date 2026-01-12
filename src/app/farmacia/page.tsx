@@ -440,18 +440,30 @@ export default function FarmaciaPage() {
     }, [tenantId])
 
     const loadData = async (tid: string) => {
-        const [sols, prods, lts, reps, aiRes] = await Promise.all([
-            supabase.from('solicitudes').select('*').eq('tenant_id', tid).order('created_at', { ascending: false }),
-            supabase.from('productos').select('*').eq('tenant_id', tid).order('descripcion'),
-            supabase.from('lotes').select('*').eq('tenant_id', tid).order('fecha_vencimiento'),
-            supabase.from('reportes').select('*').eq('tenant_id', tid).eq('tipo_destino', 'farmacia').order('created_at', { ascending: false }),
-            supabase.rpc('farmacia_alertas_predictivas', { tenant_id: tid })
-        ])
-        if (sols.data) setSolicitudes(sols.data)
-        if (prods.data) setProductos(prods.data)
-        if (lts.data) setLotes(lts.data)
-        if (reps.data) setReportes(reps.data)
-        if (aiRes.data) setAlertasIA(aiRes.data)
+        if (!tid) return;
+
+        try {
+            const [sols, prods, lts, reps, aiRes] = await Promise.all([
+                supabase.from('solicitudes').select('*').eq('tenant_id', tid).order('created_at', { ascending: false }),
+                supabase.from('productos').select('*').eq('tenant_id', tid).order('descripcion'),
+                supabase.from('lotes').select('*').eq('tenant_id', tid).order('fecha_vencimiento'),
+                supabase.from('reportes').select('*').eq('tenant_id', tid).eq('tipo_destino', 'farmacia').order('created_at', { ascending: false }),
+                supabase.rpc('farmacia_alertas_predictivas', { p_tenant_id: tid })
+            ])
+
+            if (sols.data) setSolicitudes(sols.data)
+            if (prods.data) setProductos(prods.data)
+            if (lts.data) setLotes(lts.data)
+            if (reps.data) setReportes(reps.data)
+
+            if (aiRes.error) {
+                console.error('❌ Error Alertas IA:', aiRes.error)
+            } else if (aiRes.data) {
+                setAlertasIA(aiRes.data)
+            }
+        } catch (err) {
+            console.error('❌ Error crítico cargando datos:', err)
+        }
     }
 
     // --- AUDIO LOGIC ---
