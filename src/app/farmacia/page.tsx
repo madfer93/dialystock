@@ -407,8 +407,8 @@ export default function FarmaciaPage() {
         const ch = supabase.channel('farmacia-realtime-listener')
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'solicitudes', filter: `tenant_id=eq.${tenantId}` }, (payload) => {
                 if (payload.new.estado === 'Pendiente') {
+                    console.log(`🔔 NUEVA SOLICITUD #${payload.new.id.slice(0, 6)}`)
                     playAlarmSound('NUEVA_SOLICITUD')
-                    alert(`🔔 NUEVA SOLICITUD #${payload.new.id.slice(0, 6)}`)
                     loadData(tenantId)
                 }
             })
@@ -417,15 +417,14 @@ export default function FarmaciaPage() {
             .on('broadcast', { event: 'alerta_subir' }, (payload) => {
                 console.log('🔊 Recibida alerta de subir pedido', payload)
                 playAlarmSound('SUBIR_PEDIDO')
-                alert(`⚠️ HD SOLICITA QUE SUBAS ESTE PEDIDO AHORA: #${payload.payload.id.slice(0, 6)}`)
             })
             .subscribe((status) => console.log('Farmacia Audio Channel:', status))
 
         const repsCh = supabase.channel('farmacia-reportes-listener')
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'reportes', filter: `tenant_id=eq.${tenantId}` }, (payload) => {
                 if (payload.new.tipo_destino === 'farmacia') {
+                    console.log(`📥 NUEVO REPORTE: ${payload.new.titulo}`)
                     playAlarmSound('NUEVA_SOLICITUD')
-                    alert(`📥 NUEVO REPORTE: ${payload.new.titulo}`)
                     loadData(tenantId)
                 }
             })

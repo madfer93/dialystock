@@ -28,11 +28,25 @@ export default function AuthCallback() {
 
       let sessionData = null
 
-      if (code) {
+      // 1. Verificar primero si Supabase ya capturó la sesión automáticamente
+      const { data: { session: existingSession } } = await supabase.auth.getSession()
+      if (existingSession) {
+        console.log('✅ Sesión ya detectada automáticamente')
+        sessionData = { session: existingSession, user: existingSession.user }
+      } else if (code) {
         setMessage('Intercambiando código por sesión...')
         const { data, error } = await supabase.auth.exchangeCodeForSession(code)
-        if (error) throw error
-        sessionData = data
+        if (error) {
+          console.warn('Fallo intercambio de código, reintentando ver sesión...', error.message)
+          const { data: { session: retrySession } } = await supabase.auth.getSession()
+          if (retrySession) {
+            sessionData = { session: retrySession, user: retrySession.user }
+          } else {
+            throw error
+          }
+        } else {
+          sessionData = data
+        }
       } else if (accessToken) {
         setMessage('Configurando tu sesión...')
         const { data, error } = await supabase.auth.setSession({
