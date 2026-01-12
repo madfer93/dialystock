@@ -17,24 +17,39 @@ export default function AuthCallback() {
 
   const handleCallback = async () => {
     try {
-      // Obtener el código del hash de la URL
+      // 1. Intentar obtener el 'code' (Flujo PKCE - Query Params)
+      const searchParams = new URLSearchParams(window.location.search)
+      const code = searchParams.get('code')
+
+      // 2. Intentar obtener 'access_token' (Flujo Implícito - Hash Params)
       const hashParams = new URLSearchParams(window.location.hash.substring(1))
       const accessToken = hashParams.get('access_token')
       const refreshToken = hashParams.get('refresh_token')
 
-      if (!accessToken) {
-        throw new Error('No se recibió token de acceso')
+      let sessionData = null
+
+      if (code) {
+        setMessage('Intercambiando código por sesión...')
+        const { data, error } = await supabase.auth.exchangeCodeForSession(code)
+        if (error) throw error
+        sessionData = data
+      } else if (accessToken) {
+        setMessage('Configurando tu sesión...')
+        const { data, error } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken || ''
+        })
+        if (error) throw error
+        sessionData = data
+      } else {
+        // Si no hay nada, intentar ver si Supabase ya capturó la sesión
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session) {
+          sessionData = { session, user: session.user }
+        } else {
+          throw new Error('No se recibió token ni código de acceso')
+        }
       }
-
-      setMessage('Configurando tu sesión...')
-
-      // Establecer la sesión manualmente
-      const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
-        access_token: accessToken,
-        refresh_token: refreshToken || ''
-      })
-
-      if (sessionError) throw sessionError
 
       const user = sessionData?.user
       if (!user) throw new Error('No se pudo obtener información del usuario')
