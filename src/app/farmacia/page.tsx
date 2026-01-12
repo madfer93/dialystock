@@ -721,26 +721,64 @@ export default function FarmaciaPage() {
         if (validItems.length === 0) return alert('❌ Debes agregar al menos un lote válido')
         if (!confirm(`¿Confirmar despacho de ${validItems.length} lotes?`)) return
 
+        setSaving(true)
         try {
-            await supabase.from('solicitudes').update({
+            // 1. Marcar solicitud como completada
+            const { error: solError } = await supabase.from('solicitudes').update({
                 estado: 'Completado',
                 completado_por: completadoPor,
                 fecha_completado: new Date().toISOString()
             }).eq('id', modalCompletar.solicitud.id)
+            if (solError) throw solError
 
-            // Limpiar borrador después de completar exitosamente
+            // 2. Procesar cada item despachado: Decrementar stock y Registrar consumo
+            for (const item of validItems) {
+                // Decrementar en la tabla de lotes
+                const { data: loteActual, error: loteError } = await supabase
+                    .from('lotes')
+                    .select('cantidad_disponible')
+                    .eq('tenant_id', tenantId)
+                    .eq('producto_codigo', item.producto_codigo)
+                    .eq('numero_lote', item.numero_lote)
+                    .single()
+
+                if (!loteError && loteActual) {
+                    const nuevaCant = Math.max(0, loteActual.cantidad_disponible - item.cantidad)
+                    await supabase.from('lotes')
+                        .update({ cantidad_disponible: nuevaCant })
+                        .eq('tenant_id', tenantId)
+                        .eq('producto_codigo', item.producto_codigo)
+                        .eq('numero_lote', item.numero_lote)
+                }
+
+                // Registrar en registros_consumo para la IA
+                await supabase.from('registros_consumo').insert({
+                    tenant_id: tenantId,
+                    producto_codigo: item.producto_codigo,
+                    cantidad: item.cantidad,
+                    fecha_consumo: new Date().toISOString(),
+                    solicitud_id: modalCompletar.solicitud.id
+                })
+            }
+
+            // Limpiar borrador
             localStorage.removeItem('draft_despacho_farmacia')
 
-            // Registrar evento de aprendizaje
-            analytics?.solicitudCompletada({
+            // Registrar evento para Analytics
+            analytics?.eventos.solicitudCompletada({
                 solicitudId: modalCompletar.solicitud.id,
                 tiempoCompletado: Date.now() - new Date(modalCompletar.solicitud.created_at).getTime()
             })
 
-            alert('✅ Solicitud completada')
+            alert('✅ Solicitud completada y stock actualizado')
             setModalCompletar(null)
             loadData(tenantId)
-        } catch (e: any) { alert('Error: ' + e.message) }
+        } catch (e: any) {
+            console.error('Error al completar:', e)
+            alert('Error al procesar: ' + e.message)
+        } finally {
+            setSaving(false)
+        }
     }
 
     // --- AUTOCOMPLETE ---
