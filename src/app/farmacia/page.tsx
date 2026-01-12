@@ -464,6 +464,8 @@ export default function FarmaciaPage() {
             }
         } catch (err) {
             console.error('❌ Error crítico cargando datos:', err)
+        } finally {
+            setLoading(false)
         }
     }
 
