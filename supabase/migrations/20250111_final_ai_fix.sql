@@ -11,12 +11,12 @@ DROP FUNCTION IF EXISTS farmacia_alertas_predictivas(TEXT);
 -- 2. Creación de la función con firma clara (UUID)
 CREATE OR REPLACE FUNCTION farmacia_alertas_predictivas(p_tenant_id UUID)
 RETURNS TABLE (
-    producto_codigo VARCHAR,
-    descripcion VARCHAR,
+    producto_codigo TEXT,
+    descripcion TEXT,
     stock_actual INTEGER,
     consumo_diario DECIMAL,
     dias_restantes INTEGER,
-    urgency VARCHAR
+    urgency TEXT
 ) AS $$
 BEGIN
     -- Validar que el tenant_id no sea nulo
@@ -32,9 +32,9 @@ BEGIN
         ROUND(COALESCE(p.consumo_promedio_semanal, 0) / 7, 2) as consumo_diario,
         COALESCE(p.dias_hasta_agotamiento, 0) as dias_restantes,
         CASE 
-            WHEN p.dias_hasta_agotamiento <= 7 THEN 'critica'
-            WHEN p.dias_hasta_agotamiento <= 14 THEN 'advertencia'
-            ELSE 'informativa'
+            WHEN p.dias_hasta_agotamiento <= 7 THEN 'critica'::VARCHAR
+            WHEN p.dias_hasta_agotamiento <= 14 THEN 'advertencia'::VARCHAR
+            ELSE 'informativa'::VARCHAR
         END as urgency
     FROM predicciones_consumo p
     WHERE p.tenant_id = p_tenant_id

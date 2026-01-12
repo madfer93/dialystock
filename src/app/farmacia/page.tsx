@@ -358,8 +358,8 @@ export default function FarmaciaPage() {
         const init = async () => {
             const { data: { user } } = await supabase.auth.getUser()
             if (!user) { router.push('/'); return }
-            const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
-            if (!profile || profile.role !== 'farmacia') {
+            if (!profile || (profile.role || '').toLowerCase().trim() !== 'farmacia') {
+                console.warn('Acceso denegado: Rol insuficiente o perfil no encontrado', profile?.role)
                 router.push('/')
                 return
             }
