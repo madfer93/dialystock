@@ -4,10 +4,32 @@ import { supabase } from '@/lib/supabaseClient'
 import { useEffect, useState, useRef, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import {
-    LucideLogOut, LucideClipboardList, LucideCheckCircle2, LucidePackage,
-    LucideSearch, LucidePlus, LucideTrash, LucideSave, LucideFileText, LucideMoon, LucideSun, LucideLayoutTemplate
+    LucideLogOut, LucideCheckCircle2,
+    LucideSearch, LucideTrash, LucideMoon, LucideSun, LucideLayoutTemplate
 } from 'lucide-react'
 import { useLearningAnalytics } from '@/hooks/useLearningAnalytics'
+
+interface Producto {
+    id: string
+    codigo: string
+    descripcion: string
+    categoria: string
+}
+
+interface Solicitud {
+    id: string
+    created_at: string
+    estado: string
+    solicitante: string
+    paciente: string
+    completado_por?: string
+}
+
+interface Template {
+    id: string
+    nombre: string
+    contenido: any[]
+}
 
 // --- ESTILOS DEL USUARIO (Sistema PD V3.1) ---
 const styles = `
@@ -182,9 +204,9 @@ export default function SalaPDPage() {
     const [userName, setUserName] = useState('')
 
     // Data
-    const [productos, setProductos] = useState<any[]>([])
-    const [solicitudes, setSolicitudes] = useState<any[]>([])
-    const [templates, setTemplates] = useState<any[]>([])
+    const [productos, setProductos] = useState<Producto[]>([])
+    const [solicitudes, setSolicitudes] = useState<Solicitud[]>([])
+    const [templates, setTemplates] = useState<Template[]>([])
 
     // NEW Order State
     const [solicitante, setSolicitante] = useState('')
@@ -223,18 +245,21 @@ export default function SalaPDPage() {
             const { data: { user } } = await supabase.auth.getUser()
             if (!user) { router.push('/'); return }
             const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
-            if (profile) {
-                setTenantId(profile.tenant_id)
-                setUserId(user.id)
-                setUserName(profile.nombre || '')
-                setSolicitante(profile.nombre || '') // Default solicitante
-                await loadInitialData(profile.tenant_id, user.id)
+            if (!profile || profile.role !== 'sala_pd') {
+                router.push('/')
+                return
             }
+            setTenantId(profile.tenant_id)
+            setUserId(user.id)
+            setUserName(profile.nombre || '')
+            setSolicitante(profile.nombre || '') // Default solicitante
+            await loadInitialData(profile.tenant_id, user.id)
             setLoading(false)
         }
+
         init()
         return () => { document.head.removeChild(styleSheet) }
-    }, [])
+    }, [router])
 
     const toggleDarkMode = () => {
         const newMode = !darkMode
@@ -243,23 +268,24 @@ export default function SalaPDPage() {
     }
 
     const loadInitialData = async (tid: string, uid: string) => {
-        const [prods, sols, temps] = await Promise.all([
-            // Load products suitable for PD (filtering by categories user asked: PD, Dispositivos, Quimico)
-            supabase.from('productos').select('*').eq('tenant_id', tid).in('categoria', ['PD', 'Dispositivos', 'Quimico', 'Todos']),
-            // My PD Requests
-            supabase.from('solicitudes').select('*').eq('tenant_id', tid).eq('usuario_id', uid).eq('area', 'Sala PD').order('created_at', { ascending: false }),
-            // My Templates
-            supabase.from('templates').select('*').eq('tenant_id', tid).eq('tipo', 'PD')
-        ])
+        try {
+            const [prodsRes, solsRes, tempsRes] = await Promise.all([
+                supabase.from('productos').select('*').eq('tenant_id', tid).in('categoria', ['PD', 'Dispositivos', 'Quimico', 'Todos']),
+                supabase.from('solicitudes').select('*').eq('tenant_id', tid).eq('usuario_id', uid).eq('area', 'Sala PD').order('created_at', { ascending: false }),
+                supabase.from('templates').select('*').eq('tenant_id', tid).eq('tipo', 'PD')
+            ])
 
-        if (prods.data) setProductos(prods.data)
-        if (sols.data) setSolicitudes(sols.data)
-        if (temps.data) setTemplates(temps.data)
+            if (prodsRes.data) setProductos(prodsRes.data)
+            if (solsRes.data) setSolicitudes(solsRes.data)
+            if (tempsRes.data) setTemplates(tempsRes.data)
+        } catch (err) {
+            console.error('Error cargando datos iniciales:', err)
+        }
     }
 
     // --- LOGIC ---
 
-    const actualizarCantidad = (prod: any, delta: number) => {
+    const actualizarCantidad = (prod: Producto, delta: number) => {
         setCarrito(prev => {
             const current = prev[prod.codigo]
             const newQty = (current?.cantidad || 0) + delta
@@ -283,7 +309,8 @@ export default function SalaPDPage() {
         })
     }
 
-    const setCantidadDirecta = (prod: any, qty: number) => {
+    const setCantidadDirecta = (prod: Producto, val: string | number) => {
+        const qty = Number(val) || 0
         setCarrito(prev => {
             if (qty <= 0) {
                 const copy = { ...prev }
@@ -331,12 +358,13 @@ export default function SalaPDPage() {
                 tipo: 'PD',
                 area: 'Sala PD',
                 solicitante,
-                paciente: paciente || ''
+                paciente: paciente || '',
+                fecha: new Date().toISOString()
             })
             if (solError) throw solError
 
             // 2. Create Items
-            const itemsData = items.map(i => ({
+            const itemsData = items.map((i: any) => ({
                 solicitud_id: id,
                 tenant_id: tenantId,
                 producto_codigo: i.codigo,

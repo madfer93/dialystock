@@ -64,14 +64,14 @@ export default function JefePDPage() {
     .app-container { display: flex; min-height: 100vh; background: var(--bg-secondary); color: var(--text-primary); transition: all 0.3s; }
     .sidebar { width: 260px; background: #0f172a; color: white; display: flex; flex-direction: column; transition: all 0.3s; }
     .sidebar-link { 
-      padding: 15px 20px; display: flex; items-center; gap: 12px; color: #94a3b8; 
+      padding: 15px 20px; display: flex; align-items: center; gap: 12px; color: #94a3b8; 
       text-align: left; width: 100%; transition: all 0.2s; border-left: 3px solid transparent;
     }
     .sidebar-link:hover, .sidebar-link.active { background: rgba(255,255,255,0.05); color: white; border-left-color: var(--primary); }
     
     .stat-card {
       background: var(--bg-primary); padding: 20px; border-radius: 12px; border: 1px solid var(--border-color);
-      display: flex; alignItems: center; gap: 15px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+      display: flex; align-items: center; gap: 15px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
     }
     .stat-icon {
       width: 50px; height: 50px; border-radius: 10px; display: flex; align-items: center; justify-content: center;

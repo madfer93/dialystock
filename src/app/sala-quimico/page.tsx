@@ -185,14 +185,15 @@ export default function SalaQuimicoPage() {
             const { data: { user } } = await supabase.auth.getUser()
             if (!user) { router.push('/'); return }
             const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
-            if (profile) {
-                setTenantId(profile.tenant_id)
-                setUserId(user.id)
-                setUserName(profile.nombre || '')
-                setSolicitante(profile.nombre || '')
-                await loadInitialData(profile.tenant_id, user.id)
+            if (!profile || (profile.role !== 'sala_quimico' && profile.role !== 'quimico')) {
+                router.push('/')
+                return
             }
-            setLoading(false)
+            setTenantId(profile.tenant_id)
+            setUserId(user.id)
+            setUserName(profile.nombre || '')
+            setSolicitante(profile.nombre || '')
+            await loadInitialData(profile.tenant_id, user.id)
         }
         init()
         return () => { document.head.removeChild(styleSheet) }
@@ -284,7 +285,8 @@ export default function SalaQuimicoPage() {
                 tipo: 'Quimico',
                 area: 'Sala Quimico',
                 solicitante,
-                paciente: ''
+                paciente: '',
+                fecha: new Date().toISOString()
             })
             if (solError) throw solError
 

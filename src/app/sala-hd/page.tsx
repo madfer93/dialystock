@@ -253,7 +253,10 @@ export default function SalaHDPage() {
             setUserId(user.id)
 
             const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
-            if (!profile) return
+            if (!profile || profile.role !== 'sala_hd') {
+                router.push('/')
+                return
+            }
             setTenantId(profile.tenant_id)
             setSolicitanteNombre(profile.nombre || profile.email)
 
@@ -877,11 +880,10 @@ export default function SalaHDPage() {
                                             <div className="mt-8 pt-6 border-t border-[var(--border-color)]">
                                                 {/* Indicador de validación Líneas/Filtros */}
                                                 {LINEAS.length > 0 && FILTROS.length > 0 && (
-                                                    <div className={`mb-4 p-3 rounded-lg flex items-center gap-3 ${
-                                                        validarLineasFiltros().valido
+                                                    <div className={`mb-4 p-3 rounded-lg flex items-center gap-3 ${validarLineasFiltros().valido
                                                             ? 'bg-green-50 border border-green-200'
                                                             : 'bg-red-50 border border-red-200'
-                                                    }`}>
+                                                        }`}>
                                                         {validarLineasFiltros().valido ? (
                                                             <LucideCheckCircle2 className="text-green-600" size={20} />
                                                         ) : (
@@ -987,26 +989,24 @@ export default function SalaHDPage() {
                                                     <td className="p-4 border-b border-[var(--border-color)] font-mono font-bold text-[var(--primary)]">#{s.id.slice(0, 8)}</td>
                                                     <td className="p-4 border-b border-[var(--border-color)]">{new Date(s.created_at).toLocaleString()}</td>
                                                     <td className="p-4 border-b border-[var(--border-color)]">
-                                                        <span className={`px-2 py-1 rounded-full text-xs font-bold ${
-                                                            s.estado === 'Pendiente' ? 'bg-yellow-100 text-yellow-800' :
-                                                            s.estado === 'Completado' ? 'bg-green-100 text-green-800' :
-                                                            s.estado === 'Despachado' ? 'bg-blue-100 text-blue-800' :
-                                                            'bg-gray-100 text-gray-800'
-                                                        }`}>
+                                                        <span className={`px-2 py-1 rounded-full text-xs font-bold ${s.estado === 'Pendiente' ? 'bg-yellow-100 text-yellow-800' :
+                                                                s.estado === 'Completado' ? 'bg-green-100 text-green-800' :
+                                                                    s.estado === 'Despachado' ? 'bg-blue-100 text-blue-800' :
+                                                                        'bg-gray-100 text-gray-800'
+                                                            }`}>
                                                             {s.estado}
                                                         </span>
                                                     </td>
                                                     <td className="p-4 border-b border-[var(--border-color)]">
-                                                        <span className={`px-2 py-1 rounded-full text-xs font-bold ${
-                                                            s.estado_aprobacion === 'pendiente_revision' ? 'bg-blue-100 text-blue-800' :
-                                                            s.estado_aprobacion === 'aprobado' ? 'bg-green-100 text-green-800' :
-                                                            s.estado_aprobacion === 'devuelto' ? 'bg-orange-100 text-orange-800' :
-                                                            'bg-gray-100 text-gray-800'
-                                                        }`}>
+                                                        <span className={`px-2 py-1 rounded-full text-xs font-bold ${s.estado_aprobacion === 'pendiente_revision' ? 'bg-blue-100 text-blue-800' :
+                                                                s.estado_aprobacion === 'aprobado' ? 'bg-green-100 text-green-800' :
+                                                                    s.estado_aprobacion === 'devuelto' ? 'bg-orange-100 text-orange-800' :
+                                                                        'bg-gray-100 text-gray-800'
+                                                            }`}>
                                                             {s.estado_aprobacion === 'pendiente_revision' ? '⏳ En Revisión' :
-                                                             s.estado_aprobacion === 'aprobado' ? '✅ Aprobado' :
-                                                             s.estado_aprobacion === 'devuelto' ? '↩️ Devuelto' :
-                                                             s.estado_aprobacion || '-'}
+                                                                s.estado_aprobacion === 'aprobado' ? '✅ Aprobado' :
+                                                                    s.estado_aprobacion === 'devuelto' ? '↩️ Devuelto' :
+                                                                        s.estado_aprobacion || '-'}
                                                         </span>
                                                         {s.estado_aprobacion === 'devuelto' && s.comentario_jefe && (
                                                             <div className="text-xs text-orange-600 mt-1 max-w-xs truncate" title={s.comentario_jefe}>

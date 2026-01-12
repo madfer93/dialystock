@@ -238,6 +238,39 @@ const styles = `
         z-index: 9999; backdrop-filter: blur(10px);
         border-top: 1px solid rgba(255, 255, 255, 0.2);
     }
+
+    /* AI Alerts Redesign */
+    .ai-alerts-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 20px;
+        margin-top: 20px;
+    }
+    .ai-alert-card {
+        background: var(--bg-primary);
+        border-radius: 16px;
+        padding: 20px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+        border-left: 6px solid #ccc;
+        transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+    .ai-alert-card:hover { transform: translateY(-5px); box-shadow: 0 15px 35px rgba(0,0,0,0.1); }
+    .ai-alert-card.critica { border-left-color: #ef4444; background: linear-gradient(to right, #fef2f2, transparent); }
+    .ai-alert-card.advertencia { border-left-color: #f59e0b; background: linear-gradient(to right, #fffbeb, transparent); }
+    .ai-alert-card.informativa { border-left-color: #3b82f6; background: linear-gradient(to right, #eff6ff, transparent); }
+    
+    .ai-alert-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px; }
+    .ai-alert-code { font-family: monospace; font-weight: 800; font-size: 14px; color: var(--primary); background: rgba(0,201,255,0.1); padding: 2px 8px; border-radius: 4px; }
+    .ai-alert-days { font-size: 24px; font-weight: 900; line-height: 1; }
+    .ai-alert-days span { font-size: 10px; text-transform: uppercase; display: block; opacity: 0.7; }
+    
+    .ai-alert-body { flex-grow: 1; }
+    .ai-alert-desc { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 8px; }
+    .ai-alert-stats { display: flex; gap: 15px; font-size: 12px; color: var(--text-secondary); border-top: 1px dashed var(--border-color); pt: 10px; mt: 10px; }
+    .ai-stat-pill { background: var(--bg-secondary); padding: 4px 10px; border-radius: 20px; font-weight: 500; }
 `
 
 export default function FarmaciaPage() {
@@ -326,13 +359,14 @@ export default function FarmaciaPage() {
             const { data: { user } } = await supabase.auth.getUser()
             if (!user) { router.push('/'); return }
             const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
-            if (profile) {
-                setTenantId(profile.tenant_id)
-                setUserId(user.id)
-                setCompletadoPor(profile.nombre || '')
-                loadData(profile.tenant_id)
+            if (!profile || profile.role !== 'farmacia') {
+                router.push('/')
+                return
             }
-            setLoading(false)
+            setTenantId(profile.tenant_id)
+            setUserId(user.id)
+            setCompletadoPor(profile.nombre || '')
+            loadData(profile.tenant_id)
         }
         init()
 
@@ -406,16 +440,18 @@ export default function FarmaciaPage() {
     }, [tenantId])
 
     const loadData = async (tid: string) => {
-        const [sols, prods, lts, reps] = await Promise.all([
+        const [sols, prods, lts, reps, aiRes] = await Promise.all([
             supabase.from('solicitudes').select('*').eq('tenant_id', tid).order('created_at', { ascending: false }),
             supabase.from('productos').select('*').eq('tenant_id', tid).order('descripcion'),
             supabase.from('lotes').select('*').eq('tenant_id', tid).order('fecha_vencimiento'),
-            supabase.from('reportes').select('*').eq('tenant_id', tid).eq('tipo_destino', 'farmacia').order('created_at', { ascending: false })
+            supabase.from('reportes').select('*').eq('tenant_id', tid).eq('tipo_destino', 'farmacia').order('created_at', { ascending: false }),
+            supabase.rpc('farmacia_alertas_predictivas', { tenant_id: tid })
         ])
         if (sols.data) setSolicitudes(sols.data)
         if (prods.data) setProductos(prods.data)
         if (lts.data) setLotes(lts.data)
         if (reps.data) setReportes(reps.data)
+        if (aiRes.data) setAlertasIA(aiRes.data)
     }
 
     // --- AUDIO LOGIC ---
@@ -1000,111 +1036,90 @@ export default function FarmaciaPage() {
     }
 
     const renderAlertasIA = () => {
-        // Mock data - en producción vendría de función SQL farmacia_alertas_predictivas()
-        const mockAlertas = productos.slice(0, 8).map((p, i) => ({
-            producto_codigo: p.codigo,
-            descripcion: p.descripcion,
-            stock_actual: Math.floor(Math.random() * 100) + 10,
-            consumo_diario: (Math.random() * 5 + 1).toFixed(2),
-            dias_restantes: Math.floor(Math.random() * 25) + 3,
-            urgency: i < 2 ? 'critica' : i < 5 ? 'alta' : 'media'
-        }))
+        const criticas = alertasIA.filter(a => a.dias_restantes <= 7)
+        const advertencias = alertasIA.filter(a => a.dias_restantes > 7 && a.dias_restantes <= 14)
+        const informativas = alertasIA.filter(a => a.dias_restantes > 14)
 
-        const criticas = mockAlertas.filter(a => a.dias_restantes <= 7)
-        const advertencias = mockAlertas.filter(a => a.dias_restantes > 7 && a.dias_restantes <= 14)
-        const informativas = mockAlertas.filter(a => a.dias_restantes > 14)
+        const renderCard = (a: any, type: 'critica' | 'advertencia' | 'informativa') => (
+            <div key={a.producto_codigo} className={`ai-alert-card ${type}`}>
+                <div className="ai-alert-header">
+                    <span className="ai-alert-code">{a.producto_codigo}</span>
+                    <div className={`ai-alert-days font-bold ${type === 'critica' ? 'text-red-600' : type === 'advertencia' ? 'text-amber-600' : 'text-blue-600'}`}>
+                        {Math.max(0, a.dias_restantes)}
+                        <span className="text-gray-500">días restantes</span>
+                    </div>
+                </div>
+                <div className="ai-alert-body">
+                    <p className="ai-alert-desc">{a.descripcion}</p>
+                </div>
+                <div className="ai-alert-stats">
+                    <div className="ai-stat-pill">📦 Stock: <strong>{a.stock_actual}</strong></div>
+                    <div className="ai-stat-pill">📉 Consumo: <strong>{a.consumo_diario}/día</strong></div>
+                </div>
+            </div>
+        )
 
         return (
             <div>
-                <h2 className="text-xl font-bold mb-4">🤖 Alertas Predictivas IA</h2>
-                <p className="text-sm text-gray-600 mb-6">
-                    La IA predice cuándo se agotará cada producto basándose en el consumo real de los últimos 30 días.
-                </p>
-
-                {/* Críticas - ≤7 días */}
-                {criticas.length > 0 && (
-                    <div className="bg-red-50 p-4 rounded-xl mb-4 border-l-4 border-red-500">
-                        <h3 className="font-bold text-red-800 mb-3 flex items-center gap-2">
-                            ⚠️ Crítico - Ordenar Ahora (≤7 días)
-                        </h3>
-                        {criticas.map(a => (
-                            <div key={a.producto_codigo} className="bg-white p-3 rounded mb-2 shadow-sm">
-                                <div className="flex justify-between items-start">
-                                    <div className="flex-1">
-                                        <span className="font-bold text-sm">{a.producto_codigo}</span>
-                                        <p className="text-sm text-gray-700">{a.descripcion}</p>
-                                        <div className="text-xs text-gray-600 mt-1">
-                                            Stock: {a.stock_actual} | Consumo diario: {a.consumo_diario}
-                                        </div>
-                                    </div>
-                                    <span className="text-red-600 font-bold text-right">
-                                        {a.dias_restantes} días<br />
-                                        <span className="text-[10px]">restantes</span>
-                                    </span>
-                                </div>
-                            </div>
-                        ))}
+                <div className="mb-8 border-b pb-4 flex justify-between items-end">
+                    <div>
+                        <h2 className="text-2xl font-black text-gray-800 flex items-center gap-3">
+                            <span className="p-2 bg-blue-100 rounded-xl">🤖</span>
+                            Alertas Predictivas IA
+                        </h2>
+                        <p className="text-sm text-gray-500 mt-1">
+                            Análisis en tiempo real basado en el historial de consumo de los últimos 30 días.
+                        </p>
                     </div>
-                )}
-
-                {/* Advertencia - 8-14 días */}
-                {advertencias.length > 0 && (
-                    <div className="bg-yellow-50 p-4 rounded-xl mb-4 border-l-4 border-yellow-500">
-                        <h3 className="font-bold text-yellow-800 mb-3 flex items-center gap-2">
-                            ⏰ Advertencia - Planificar Pedido (8-14 días)
-                        </h3>
-                        {advertencias.map(a => (
-                            <div key={a.producto_codigo} className="bg-white p-3 rounded mb-2 shadow-sm">
-                                <div className="flex justify-between items-start">
-                                    <div className="flex-1">
-                                        <span className="font-bold text-sm">{a.producto_codigo}</span>
-                                        <p className="text-sm text-gray-700">{a.descripcion}</p>
-                                        <div className="text-xs text-gray-600 mt-1">
-                                            Stock: {a.stock_actual} | Consumo diario: {a.consumo_diario}
-                                        </div>
-                                    </div>
-                                    <span className="text-yellow-600 font-bold text-right">
-                                        {a.dias_restantes} días<br />
-                                        <span className="text-[10px]">restantes</span>
-                                    </span>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
-
-                {/* Informativas - 15-30 días */}
-                {informativas.length > 0 && (
-                    <div className="bg-blue-50 p-4 rounded-xl border-l-4 border-blue-500">
-                        <h3 className="font-bold text-blue-800 mb-3 flex items-center gap-2">
-                            ℹ️ Información - Stock Adecuado (15-30 días)
-                        </h3>
-                        {informativas.map(a => (
-                            <div key={a.producto_codigo} className="bg-white p-3 rounded mb-2 shadow-sm">
-                                <div className="flex justify-between items-start">
-                                    <div className="flex-1">
-                                        <span className="font-bold text-sm">{a.producto_codigo}</span>
-                                        <p className="text-sm text-gray-700">{a.descripcion}</p>
-                                        <div className="text-xs text-gray-600 mt-1">
-                                            Stock: {a.stock_actual} | Consumo diario: {a.consumo_diario}
-                                        </div>
-                                    </div>
-                                    <span className="text-blue-600 font-bold text-right">
-                                        {a.dias_restantes} días<br />
-                                        <span className="text-[10px]">restantes</span>
-                                    </span>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
-
-                <div className="mt-6 p-4 bg-purple-50 rounded-xl border border-purple-200">
-                    <p className="text-sm text-purple-800">
-                        <strong>💡 Nota:</strong> Estos cálculos son predicciones basadas en IA.
-                        Para conectar con datos reales, ejecuta la función SQL <code className="bg-purple-200 px-2 py-1 rounded">farmacia_alertas_predictivas(tenant_id)</code> en Supabase.
-                    </p>
                 </div>
+
+                {alertasIA.length === 0 ? (
+                    <div className="text-center p-16 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
+                        <div className="text-4xl mb-4">✨</div>
+                        <p className="text-gray-400 font-medium italic">Todo bajo control. No hay alertas predictivas pendientes.</p>
+                    </div>
+                ) : (
+                    <div className="space-y-10">
+                        {/* Críticas */}
+                        {criticas.length > 0 && (
+                            <section>
+                                <h3 className="text-red-600 font-black uppercase tracking-widest text-xs mb-4 flex items-center gap-2">
+                                    <span className="w-2 h-2 bg-red-600 rounded-full animate-ping"></span>
+                                    Crítico - Ordenar Ahora (≤7 días)
+                                </h3>
+                                <div className="ai-alerts-grid">
+                                    {criticas.map(a => renderCard(a, 'critica'))}
+                                </div>
+                            </section>
+                        )}
+
+                        {/* Advertencias */}
+                        {advertencias.length > 0 && (
+                            <section>
+                                <h3 className="text-amber-600 font-black uppercase tracking-widest text-xs mb-4 flex items-center gap-2">
+                                    <span className="w-2 h-2 bg-amber-500 rounded-full"></span>
+                                    Advertencia - Planificar Pedido (8-14 días)
+                                </h3>
+                                <div className="ai-alerts-grid">
+                                    {advertencias.map(a => renderCard(a, 'advertencia'))}
+                                </div>
+                            </section>
+                        )}
+
+                        {/* Informativas */}
+                        {informativas.length > 0 && (
+                            <section>
+                                <h3 className="text-blue-600 font-black uppercase tracking-widest text-xs mb-4 flex items-center gap-2">
+                                    <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                                    Stock Adecuado (15-30 días)
+                                </h3>
+                                <div className="ai-alerts-grid">
+                                    {informativas.map(a => renderCard(a, 'informativa'))}
+                                </div>
+                            </section>
+                        )}
+                    </div>
+                )}
             </div>
         )
     }

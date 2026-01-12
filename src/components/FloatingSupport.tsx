@@ -78,56 +78,62 @@ export default function FloatingSupport() {
         <div className="fixed bottom-4 right-4 md:bottom-8 md:right-8 z-[9999] flex flex-col items-end gap-3 md:gap-4">
             {/* Chat Window */}
             {isChatOpen && (
-                <div className="bg-slate-900 border border-white/10 w-[calc(100vw-2rem)] sm:w-[350px] md:w-[400px] h-[70vh] sm:h-[500px] max-h-[600px] rounded-2xl md:rounded-[2rem] shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-8 duration-500">
-                    <div className="p-4 md:p-6 bg-blue-600 flex items-center justify-between text-white">
-                        <div className="flex items-center gap-2 md:gap-3">
-                            <div className="p-1.5 md:p-2 bg-white/20 rounded-lg md:rounded-xl">
-                                <Bot size={18} className="md:w-5 md:h-5" />
+                <div className="fixed inset-x-4 bottom-24 sm:relative sm:inset-auto sm:mb-4 bg-slate-900/80 backdrop-blur-2xl border border-white/20 w-auto sm:w-[400px] h-[75vh] sm:h-[600px] rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-300 z-[10000]">
+                    {/* Header */}
+                    <div className="p-6 bg-gradient-to-br from-indigo-600 to-blue-700 flex items-center justify-between text-white relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-3xl"></div>
+                        <div className="flex items-center gap-4 relative z-10">
+                            <div className="p-3 bg-white/20 rounded-2xl backdrop-blur-md">
+                                <Bot size={24} className="text-white" />
                             </div>
                             <div>
-                                <h4 className="font-black text-xs md:text-sm uppercase tracking-widest">Asistente IA</h4>
-                                <p className="text-[9px] md:text-[10px] text-blue-100 font-bold">Respuesta inmediata</p>
+                                <h4 className="font-black text-sm uppercase tracking-tighter">DialyStock AI</h4>
+                                <p className="text-[10px] text-blue-100 font-medium flex items-center gap-1">
+                                    <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span>
+                                    Soporte Inteligente Activo
+                                </p>
                             </div>
                         </div>
-                        <button onClick={() => setIsChatOpen(false)} className="p-1.5 md:p-2 hover:bg-white/10 rounded-full transition-colors">
-                            <X size={18} className="md:w-5 md:h-5" />
+                        <button onClick={() => setIsChatOpen(false)} className="p-2 hover:bg-white/20 rounded-full transition-all relative z-10">
+                            <X size={20} />
                         </button>
                     </div>
 
-                    <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 md:p-6 space-y-3 md:space-y-4">
+                    {/* Messages Area */}
+                    <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-6 bg-transparent">
                         {messages.map((m, i) => (
                             <div key={i} className={cn(
-                                "max-w-[90%] md:max-w-[85%] p-3 md:p-4 rounded-xl md:rounded-2xl text-xs md:text-sm leading-relaxed",
+                                "max-w-[85%] p-4 rounded-3xl text-sm leading-relaxed shadow-sm transition-all animate-in slide-in-from-bottom-2",
                                 m.role === 'assistant'
-                                    ? "bg-slate-800 text-slate-200 self-start border border-white/5"
-                                    : "bg-blue-600 text-white self-end ml-auto"
+                                    ? "bg-slate-800/90 text-slate-100 self-start border border-white/5 rounded-tl-none"
+                                    : "bg-indigo-600 text-white self-end ml-auto rounded-tr-none"
                             )}>
                                 {m.content}
                             </div>
                         ))}
                         {loading && (
-                            <div className="bg-slate-800 text-slate-400 p-3 md:p-4 rounded-xl md:rounded-2xl text-[10px] md:text-xs flex items-center gap-2 w-fit">
-                                <div className="flex gap-1">
-                                    <span className="w-1.5 h-1.5 md:w-2 md:h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
-                                    <span className="w-1.5 h-1.5 md:w-2 md:h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
-                                    <span className="w-1.5 h-1.5 md:w-2 md:h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+                            <div className="bg-slate-800/80 backdrop-blur-sm text-slate-300 p-4 rounded-3xl text-xs flex items-center gap-3 w-fit animate-pulse">
+                                <div className="flex gap-1.5">
+                                    <div className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce"></div>
+                                    <div className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                                    <div className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
                                 </div>
-                                <span className="ml-1 md:ml-2">Escribiendo...</span>
+                                <span className="font-medium">Pensando...</span>
                             </div>
                         )}
 
-                        {/* Preguntas Sugeridas */}
+                        {/* Suggestions */}
                         {showSuggestions && messages.length <= 1 && !loading && (
-                            <div className="mt-3 md:mt-4">
-                                <p className="text-[10px] md:text-xs text-slate-500 mb-2 flex items-center gap-1">
-                                    <Sparkles size={10} className="md:w-3 md:h-3" /> Preguntas sugeridas:
+                            <div className="pt-4 border-t border-white/5">
+                                <p className="text-[10px] text-slate-500 mb-3 px-2 flex items-center gap-2 font-bold uppercase tracking-widest">
+                                    <Sparkles size={12} className="text-amber-400" /> Consultas rápidas
                                 </p>
-                                <div className="flex flex-wrap gap-1.5 md:gap-2">
+                                <div className="flex flex-wrap gap-2">
                                     {SUGGESTED_QUESTIONS.map((q, i) => (
                                         <button
                                             key={i}
                                             onClick={() => handleSendMessage(q)}
-                                            className="px-2 md:px-3 py-1 md:py-1.5 bg-blue-600/20 hover:bg-blue-600/40 border border-blue-500/30 rounded-full text-[10px] md:text-xs text-blue-300 transition-all hover:scale-105"
+                                            className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl text-[11px] text-slate-300 transition-all hover:scale-105 active:scale-95"
                                         >
                                             {q}
                                         </button>
@@ -137,21 +143,24 @@ export default function FloatingSupport() {
                         )}
                     </div>
 
-                    <div className="p-3 md:p-4 bg-slate-800/50 border-t border-white/5 flex gap-2">
-                        <input
-                            type="text"
-                            placeholder="Escribe tu duda aquí..."
-                            value={input}
-                            onChange={(e) => setInput(e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}
-                            className="flex-1 bg-slate-900 border border-white/10 rounded-lg md:rounded-xl px-3 md:px-4 py-2 text-xs md:text-sm text-white focus:outline-none focus:border-blue-500 transition-colors"
-                        />
+                    {/* Input Area */}
+                    <div className="p-4 bg-slate-900/50 backdrop-blur-md border-t border-white/10 flex gap-2">
+                        <div className="flex-1 relative">
+                            <input
+                                type="text"
+                                placeholder="Escribe tu mensaje..."
+                                value={input}
+                                onChange={(e) => setInput(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}
+                                className="w-full bg-slate-800/50 border border-white/5 rounded-2xl px-5 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all placeholder:text-slate-500"
+                            />
+                        </div>
                         <button
                             onClick={() => handleSendMessage()}
                             disabled={loading || !input.trim()}
-                            className="p-2 bg-blue-600 text-white rounded-lg md:rounded-xl hover:bg-blue-500 disabled:opacity-50 transition-all"
+                            className="p-3 bg-indigo-600 text-white rounded-2xl hover:bg-indigo-500 disabled:opacity-50 disabled:grayscale transition-all shadow-lg hover:shadow-indigo-500/20 active:scale-95"
                         >
-                            <Send size={16} className="md:w-[18px] md:h-[18px]" />
+                            <Send size={20} />
                         </button>
                     </div>
                 </div>

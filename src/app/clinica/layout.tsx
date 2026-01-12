@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabaseClient'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
-const allowedRoles = ['admin_clinica', 'jefe_hd', 'farmacia', 'usuario']
+const allowedRoles = ['admin_clinica']
 
 export default function ClinicaLayout({
   children,
